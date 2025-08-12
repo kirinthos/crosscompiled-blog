@@ -1,0 +1,389 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import KaTeX CSS for math rendering */
+@import 'katex/dist/katex.min.css';
+
+/* Enhanced code highlighting styles */
+pre {
+  @apply bg-background-accent p-4 rounded-lg overflow-x-auto border border-neutral-200 relative;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaco', 'Consolas', monospace;
+  line-height: 1.5;
+}
+
+code {
+  @apply bg-background-accent px-2 py-1 rounded text-sm text-primary-700 border border-neutral-200;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaco', 'Consolas', monospace;
+}
+
+pre code {
+  @apply bg-transparent p-0 border-0 text-text-primary text-sm;
+}
+
+/* Syntax highlighting colors */
+.hljs {
+  @apply bg-background-accent text-text-primary;
+}
+
+.hljs-keyword {
+  @apply text-primary-600 font-semibold;
+}
+
+.hljs-string, .hljs-attr {
+  @apply text-secondary-600;
+}
+
+.hljs-number, .hljs-literal {
+  @apply text-status-warning;
+}
+
+.hljs-comment {
+  @apply text-text-muted italic;
+}
+
+.hljs-function, .hljs-title {
+  @apply text-status-info font-semibold;
+}
+
+.hljs-variable, .hljs-name {
+  @apply text-primary-700;
+}
+
+.hljs-operator, .hljs-punctuation {
+  @apply text-text-secondary;
+}
+
+.hljs-built_in, .hljs-class {
+  @apply text-secondary-700;
+}
+
+.hljs-tag {
+  @apply text-primary-600;
+}
+
+.hljs-meta {
+  @apply text-text-muted;
+}
+
+/* Code block language labels */
+pre[class*="language-"]::before {
+  content: attr(class);
+  @apply absolute top-2 right-2 text-xs text-text-muted bg-neutral-100 px-2 py-1 rounded;
+  text-transform: uppercase;
+  font-family: system-ui, sans-serif;
+}
+
+/* Copy button for code blocks */
+pre:hover .copy-button {
+  @apply opacity-100;
+}
+
+.copy-button {
+  @apply absolute top-2 right-2 opacity-0 transition-opacity duration-200 bg-neutral-200 hover:bg-neutral-300 text-text-secondary hover:text-text-primary px-2 py-1 rounded text-xs cursor-pointer;
+}
+
+/* Enhanced image styles */
+.prose img {
+  @apply max-w-full h-auto rounded-lg shadow-md border border-neutral-200;
+}
+
+.prose figure {
+  @apply my-8;
+}
+
+.prose figcaption {
+  @apply text-center text-sm text-text-muted mt-2 italic;
+}
+
+/* Enhanced link styles */
+.prose a {
+  @apply text-primary-600 hover:text-primary-800 no-underline transition-colors duration-200 border-b border-primary-200 hover:border-primary-400;
+}
+
+.prose a:hover {
+  @apply bg-primary-50;
+}
+
+/* Heading anchor links */
+.heading-link {
+  @apply no-underline border-0 hover:bg-transparent;
+}
+
+.heading-link:hover {
+  @apply text-primary-600;
+}
+
+/* Enhanced blockquote styles */
+.prose blockquote {
+  @apply border-l-4 border-primary-500 bg-primary-50 pl-6 py-4 rounded-r-lg my-6 relative;
+}
+
+.prose blockquote::before {
+  content: '"';
+  @apply absolute -top-2 -left-1 text-4xl text-primary-300 font-serif;
+}
+
+.prose blockquote p {
+  @apply italic text-primary-800 text-lg;
+}
+
+/* Enhanced table styles */
+.prose table {
+  @apply border border-neutral-200 rounded-lg overflow-hidden shadow-sm w-full;
+}
+
+.prose th {
+  @apply bg-neutral-50 font-semibold text-text-primary border-b-2 border-neutral-300;
+}
+
+.prose td, .prose th {
+  @apply border-b border-neutral-200 px-4 py-3;
+}
+
+.prose tbody tr:hover {
+  @apply bg-neutral-50;
+}
+
+/* Enhanced list styles */
+.prose ul {
+  @apply space-y-2;
+}
+
+.prose ol {
+  @apply space-y-2;
+}
+
+.prose li {
+  @apply leading-relaxed;
+}
+
+.prose ul > li::marker {
+  @apply text-primary-500;
+}
+
+.prose ol > li::marker {
+  @apply text-primary-600 font-semibold;
+}
+
+/* Task list styles */
+.prose input[type="checkbox"] {
+  @apply mr-2 accent-primary-500;
+}
+
+.prose li:has(input[type="checkbox"]) {
+  @apply list-none;
+}
+
+/* Horizontal rule styles */
+.prose hr {
+  @apply border-0 h-px bg-gradient-to-r from-transparent via-neutral-300 to-transparent my-8;
+}
+
+/* Math equation styles */
+.katex {
+  @apply text-text-primary;
+}
+
+.katex-display {
+  @apply my-6 overflow-x-auto;
+}
+
+/* Enhanced Callout boxes with icons */
+.prose .callout {
+  @apply p-4 rounded-lg border-l-4 my-6 relative pl-12;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.prose .callout::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* Info/Informational callouts */
+.prose .callout.info {
+  @apply bg-blue-50 border-blue-400 text-blue-900;
+}
+
+.prose .callout.info::before {
+  content: 'ℹ️';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Warning callouts */
+.prose .callout.warning {
+  @apply bg-yellow-50 border-yellow-400 text-yellow-900;
+}
+
+.prose .callout.warning::before {
+  content: '⚠️';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Dire warning callouts */
+.prose .callout.danger {
+  @apply bg-red-50 border-red-500 text-red-900;
+  border-left-width: 6px;
+}
+
+.prose .callout.danger::before {
+  content: '🚨';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Stream of consciousness / thoughts */
+.prose .callout.thought {
+  @apply bg-purple-50 border-purple-400 text-purple-900;
+  font-style: italic;
+}
+
+.prose .callout.thought::before {
+  content: '💭';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Success/positive callouts */
+.prose .callout.success {
+  @apply bg-green-50 border-green-400 text-green-900;
+}
+
+.prose .callout.success::before {
+  content: '✅';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Error callouts (alias for danger) */
+.prose .callout.error {
+  @apply bg-red-50 border-red-500 text-red-900;
+}
+
+.prose .callout.error::before {
+  content: '❌';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Note callouts (neutral/gray) */
+.prose .callout.note {
+  @apply bg-gray-50 border-gray-400 text-gray-900;
+}
+
+.prose .callout.note::before {
+  content: '📝';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Tip callouts */
+.prose .callout.tip {
+  @apply bg-emerald-50 border-emerald-400 text-emerald-900;
+}
+
+.prose .callout.tip::before {
+  content: '💡';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Prompt callouts (user prompts to AI) */
+.prose .callout.prompt {
+  @apply bg-indigo-50 border-indigo-400 text-indigo-900;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaco', 'Consolas', monospace;
+}
+
+.prose .callout.prompt::before {
+  content: '🧪';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Robot/AI response callouts */
+.prose .callout.robot {
+  @apply bg-slate-50 border-slate-400 text-slate-900;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaco', 'Consolas', monospace;
+}
+
+.prose .callout.robot::before {
+  content: '🤖';
+  font-size: 18px;
+  line-height: 20px;
+}
+
+/* Dark theme support for callouts */
+@media (prefers-color-scheme: dark) {
+  .prose .callout.info {
+    @apply bg-blue-900/20 border-blue-400 text-blue-100;
+  }
+  
+  .prose .callout.warning {
+    @apply bg-yellow-900/20 border-yellow-400 text-yellow-100;
+  }
+  
+  .prose .callout.danger {
+    @apply bg-red-900/20 border-red-400 text-red-100;
+  }
+  
+  .prose .callout.thought {
+    @apply bg-purple-900/20 border-purple-400 text-purple-100;
+  }
+  
+  .prose .callout.success {
+    @apply bg-green-900/20 border-green-400 text-green-100;
+  }
+  
+  .prose .callout.error {
+    @apply bg-red-900/20 border-red-400 text-red-100;
+  }
+  
+  .prose .callout.note {
+    @apply bg-gray-900/20 border-gray-400 text-gray-100;
+  }
+  
+  .prose .callout.tip {
+    @apply bg-emerald-900/20 border-emerald-400 text-emerald-100;
+  }
+  
+  .prose .callout.prompt {
+    @apply bg-indigo-900/20 border-indigo-400 text-indigo-100;
+  }
+  
+  .prose .callout.robot {
+    @apply bg-slate-900/20 border-slate-400 text-slate-100;
+  }
+}
+
+/* Footnote styles */
+.prose .footnote-ref {
+  @apply text-primary-600 no-underline;
+}
+
+.prose .footnote-backref {
+  @apply text-primary-600 no-underline ml-1;
+}
+
+/* Print styles */
+@media print {
+  .prose {
+    @apply text-black;
+  }
+  
+  .prose pre {
+    @apply border border-gray-300 bg-gray-50;
+  }
+  
+  .prose a {
+    @apply text-black underline;
+  }
+}
