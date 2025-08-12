@@ -1,5 +1,8 @@
 # CrossCompiled Blog
 
+This blog is designed by me, Jay. However, it is _entirely coded by a host of AI
+tools._
+
 A modern static blog built with Next.js, TypeScript, and Tailwind CSS. Write
 your blog posts in Markdown and deploy automatically to AWS S3 using GitHub
 Actions.
