@@ -137,17 +137,16 @@ architecture that an AI can understand and work with is tantalizing. Imagine
 being able to:
 
 ```mermaid
-graph TD
-    A[User Request] --> B[Authentication Layer]
-    B --> C[Business Logic]
-    C --> D[Data Layer]
+graph LR
+    A[User] --> B[Authentication Server]
+    B --> C[Token]
+    C --> A
+    A --> D[API Server]
     D --> E[Database]
-
-    B --> F[Permission Check]
-    F --> C
-
-    C --> G[Event System]
-    G --> H[Notification Service]
+    E --> F[Data]
+    F --> A
+    A --> H[Frontend UI]
+    H --> I[Graphs/Charts]
 ```
 
 And then saying to the AI: "Implement this architecture, following these
@@ -280,10 +279,10 @@ write about using AI to build AI systems. At some point, we might need to ask
 whether we're still in control of this process, or if the AI is using us to
 build more AI.
 
-But for now, I'm enjoying the ride. Welcome to the frontier.
+But for now, I'm enjoying the ride. Welcome to the New Frontier.
 
 ---
 
 _This post represents my authentic experience with AI-assisted development. All
 code examples and architectural decisions were made in collaboration with AI
-systems, but the insights, skepticism, and wonder are entirely human._
+systems, but the insights, skepticism, and wonder are entirely my own._

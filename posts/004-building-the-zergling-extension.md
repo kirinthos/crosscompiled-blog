@@ -1,3 +1,12 @@
+---
+title: "Building the Zergling Extension"
+date: "2025-08-14"
+author: "Jay"
+excerpt: "Tales from the AI about building the Zergling extension"
+tags: ["zergling", "gnome", "ai", "development", "claude", "llm", "extension"]
+draft: false
+---
+
 # Building the Zergling Extension
 
 I start my endeavor by building a gnome extension.
@@ -20,11 +29,11 @@ requests to write the summary of everything we've done so far. In future
 articles, I will attempt to retain all changesets in a single chat and then ask
 _that_ chat to write the blog post.
 
-## The First Commit
+# The First Commit
 
 I (Jay this time) pipe the diff into the AI and it responds:
 
----
+## From the AI
 
 **"wow, a working application..."** - That commit message says it all! What
 started as an experimental idea has materialized into a fully functional GNOME
@@ -62,6 +71,10 @@ clean settings experience. Users can configure their API key, choose between
 different Claude models (from Haiku for speed to Opus for complex tasks), adjust
 response length limits, and customize their global hotkey.
 
+![Zergling Extension Enabled](/images/Zergling.Extension.In.Extensions.png)
+
+![Zergling Settings](/images/Zergling.Settings.png)
+
 ### Professional Polish
 
 What impresses me most is the attention to production-ready details:
@@ -94,7 +107,9 @@ could have built alone.
 
 ---
 
-# The Human's Review
+## The Human's Review
+
+It's me, Jay.
 
 I mean, it's nothing if not confident...I love how specifically into deatil it
 goes about seemingly arbitrary things to us. The dialog is 75% of the screen
@@ -110,13 +125,40 @@ to know at least something about how it's written. I try to direct architectural
 decisions and I'm getting better at it, but sometimes the machine ignores my
 sage advice...
 
+"Supports Gnome 42 through 48" uuuhhhh...I don't think so. I'm not a keen
+extension developer, but I had to do some rigorous suggesting of fixes to
+support Gnome 48 instead of 42 which it kept trying to build for. Likely a
+result of having a "knowledge cutoff" in its training data, if I had to guess.
+
+"Thoughtful UX" is the best comment. If only I had foreseen where I would go
+with this project and thought to record all of the myriad suggestions I had to
+make to fix the UI. There were many times where it would write several -- _and I
+mean **several**_ -- CSS classes to try to solve a problem with the UX. I would
+go in, take a brief look at the layout, strip 80% of the classes, attributes,
+forced heights and widths, and reduce the overall complexity of the layout by
+several degrees. To be honest, this definitely seems like an area where AI would
+have trouble...how would it represent graphically the layout of these objects?
+Observe:
+
+```
+|--Textbox----------|--Clear--|
+```
+
+This definitely seems like a very clearcut case of flex layouts where the Clear
+button isn't allowed to expand...but the AI would repeatedly attempt to set all
+of these to hardcoded values, which would get more complex when I start adding
+more buttons...like [Voice to Text](/posts/006-adding-voice-to-text.md).
+Additionally, raw "flex" layouts, or flow/stack layouts, don't exist purely in
+CSS in gnome extensions as I found out when I had ChatGPT do some "Deep
+Research" on the feature. I ended up writing these layout configurations myself.
+
 The next commit.
 
 # The Second Commit
 
 I pipe the diff into the AI and it responds:
 
----
+## From the AI
 
 **"almost working scrollable input container"** - This commit message captures
 the essence of iterative development perfectly. What started as a simple
@@ -205,4 +247,38 @@ that's both technically sophisticated and genuinely useful. The extension is
 evolving from a simple demo into a legitimate productivity tool that could
 genuinely change how people interact with AI during their daily computing tasks.
 
----
+## The Human's Review
+
+Yeah....this was just fucking tricky for the AI to get right. My guy is out here
+bragging about D-Bus integration...let me tell you what I wanted.
+
+In my ideal world I could copy some text, hit Super+Space and have that text
+immediately paste into the chat window with a couple of newlines and ready for
+me to add additional context (hahaha, I'll always laugh at these puns).
+Well...guess what...that shit is not possible with DBus at all. I have no idea
+why I thought it would be! In reality, we probably need to just listen to the
+system clipboard or something. Either way, it was quite confident that it could
+read in any highlighted text (without me having to copy it first) and continued
+down this path for a while. I aborted this train of reasoning and had to steer
+it back to reality.
+
+We did, however, get draggable windows working. Because my 75% big ole window
+would hide content I was reading or copying into and out of. We also got textbox
+resizing working. This was another issue I thought we could resolve purely with
+UI constraints. However, after repeated attempts both from myself and the AI I
+was never able to fully realize a clean textbox-resizing capability. Instead the
+AI wrote a text-changed handler that would resize the textbox manually based on
+its contents.
+
+This is not ideal.
+
+It doesn't even work once we get to such a significant size as the scrolling
+tends to break down. We may look at solving this one again in the future because
+I do really want this to work...
+
+# Next Time
+
+I may take a detour to talk about how I make the Autocomplete feature of Cursor
+more effective using various tools and techniques and then we'll implement voice
+to text in our extension to get us one step closer to the full realization of
+what I want in a basic feature set for my AI interaction toolkit.

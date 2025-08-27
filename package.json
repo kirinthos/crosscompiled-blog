@@ -9,11 +9,13 @@
     "start": "npx serve@latest out",
     "export": "next build",
     "lint": "next lint",
-    "preview": "npm run build && npx serve@latest out"
+    "preview": "npm run build && npx serve@latest out",
+    "clear-cache": "node scripts/clear-cache.js"
   },
   "dependencies": {
     "date-fns": "^2.30.0",
     "gray-matter": "^4.0.3",
+    "mermaid": "^11.10.1",
     "next": "^14.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

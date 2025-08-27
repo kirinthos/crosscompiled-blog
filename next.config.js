@@ -25,6 +25,36 @@ const nextConfig = {
         poll: 1000,
       };
     }
+
+    // Handle KaTeX module resolution issues
+    config.resolve = {
+      ...config.resolve,
+      fallback: {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+      },
+    };
+
+    // Optimize KaTeX for better module resolution
+    if (dev) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks?.cacheGroups,
+            katex: {
+              test: /[\\/]node_modules[\\/](katex|rehype-katex)[\\/]/,
+              name: "katex",
+              chunks: "all",
+              priority: 20,
+            },
+          },
+        },
+      };
+    }
+
     return config;
   },
 };

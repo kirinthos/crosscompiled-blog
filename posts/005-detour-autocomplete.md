@@ -7,7 +7,7 @@ that it could complete so much so quickly. As time drew on, some of the
 suggestions, particularly in systems languages like Rust, wouldn't be up to par.
 I needed some way to improve them.
 
-This is how I did that.
+This is how I did it.
 
 # Leading The Question
 

@@ -8,8 +8,10 @@ import remarkMath from 'remark-math';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import rehypeKatex from 'rehype-katex';
+// Dynamic import for KaTeX to avoid module resolution issues in development
+let rehypeKatex: any = null;
 import { visit } from 'unist-util-visit';
+import { convertEmojis } from './emojis';
 
 const postsDirectory = path.join(process.cwd(), 'posts');
 
@@ -48,6 +50,33 @@ function remarkCallouts() {
             // Remove children since we've converted to HTML
             delete node.children;
           }
+        }
+      }
+    });
+  };
+}
+
+// Custom remark plugin to handle Mermaid diagrams
+function remarkMermaid() {
+  return (tree: any) => {
+    visit(tree, 'code', (node: any) => {
+      if (node.lang === 'mermaid') {
+        // Convert mermaid code block to a custom HTML element
+        node.type = 'html';
+        node.value = `<div class="mermaid-diagram" data-mermaid="${encodeURIComponent(node.value)}"></div>`;
+      }
+    });
+  };
+}
+
+// Custom remark plugin to handle Slack-style emoji syntax
+function remarkEmojis() {
+  return (tree: any) => {
+    visit(tree, 'text', (node: any) => {
+      if (node.value && typeof node.value === 'string') {
+        const convertedText = convertEmojis(node.value);
+        if (convertedText !== node.value) {
+          node.value = convertedText;
         }
       }
     });
@@ -166,10 +195,22 @@ export async function getPostData(id: string): Promise<BlogPost> {
   // Use gray-matter to parse the post metadata section
   const matterResult = matter(fileContents);
 
+  // Dynamically import KaTeX to avoid module resolution issues
+  if (!rehypeKatex) {
+    try {
+      rehypeKatex = (await import('rehype-katex')).default;
+    } catch (error) {
+      console.warn('Failed to load rehype-katex, math rendering will be disabled:', error);
+      rehypeKatex = () => {}; // No-op plugin
+    }
+  }
+
   // Use remark to convert markdown into HTML string with enhanced features
   const processedContent = await remark()
     .use(gfm) // GitHub Flavored Markdown support
     .use(remarkCallouts) // Custom callout boxes
+    .use(remarkMermaid) // Custom Mermaid diagram handling
+    .use(remarkEmojis) // Custom emoji conversion
     .use(remarkMath) // Math notation support
     .use(html, { sanitize: false })
     .use(rehypeHighlight) // Syntax highlighting for code blocks
@@ -181,7 +222,7 @@ export async function getPostData(id: string): Promise<BlogPost> {
         className: ['heading-link']
       }
     })
-    .use(rehypeKatex) // Math rendering
+    .use(rehypeKatex) // Math rendering (dynamically loaded)
     .process(matterResult.content);
   
   const contentHtml = processedContent.toString();

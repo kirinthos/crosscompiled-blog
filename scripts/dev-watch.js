@@ -12,8 +12,16 @@ function startDevServer() {
   if (devServer) {
     console.log("🔄 Restarting development server...");
     devServer.kill();
+    // Give the process time to fully terminate
+    setTimeout(() => {
+      startServer();
+    }, 1000);
+  } else {
+    startServer();
   }
+}
 
+function startServer() {
   devServer = spawn("npm", ["run", "dev"], {
     stdio: "inherit",
     shell: true,
@@ -21,6 +29,20 @@ function startDevServer() {
 
   devServer.on("error", (err) => {
     console.error("❌ Dev server error:", err);
+    // Attempt to restart after a delay if there's an error
+    setTimeout(() => {
+      console.log("🔄 Attempting to restart after error...");
+      startDevServer();
+    }, 2000);
+  });
+
+  devServer.on("exit", (code, signal) => {
+    if (code !== 0 && code !== null) {
+      console.log(`⚠️  Dev server exited with code ${code}, restarting...`);
+      setTimeout(() => {
+        startDevServer();
+      }, 1000);
+    }
   });
 }
 
@@ -44,7 +66,7 @@ const configWatcher = chokidar.watch(
 configWatcher.on("change", restartDevServer);
 
 // Watch for new markdown files
-const postsWatcher = chokidar.watch("posts/**/*.md", {
+const postsWatcher = chokidar.watch("posts/**/*", {
   persistent: true,
   ignoreInitial: true,
 });

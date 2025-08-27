@@ -1,5 +1,6 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
+import MermaidInitializer from '../components/MermaidInitializer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -25,7 +26,7 @@ export default function RootLayout({
                 </a>
               </h1>
               <p className="text-text-secondary mt-2">
-                Thoughts on software development, engineering, and technology
+                Cross compiled perspective on technology.
               </p>
             </div>
           </header>
@@ -38,6 +39,7 @@ export default function RootLayout({
             </div>
           </footer>
         </div>
+        <MermaidInitializer />
       </body>
     </html>
   )
