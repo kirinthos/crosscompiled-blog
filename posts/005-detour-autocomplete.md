@@ -1,4 +1,11 @@
-## draft: true
+---
+title: "Detour: Effective Autocomplete in Cursor"
+date: "2025-08-24"
+author: "Jay"
+excerpt: "Techniques for improving the Autocomplete suggestions in Cursor"
+tags: ["cursor", "llms", "editor", "autocomplete", "suggestion", "techniques"]
+draft: true
+---
 
 # Detour: AI Autocompletion
 

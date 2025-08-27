@@ -1,4 +1,12 @@
 ---
+title: "Can you hear me? Adding Voice2Text"
+date: "2025-08-27"
+author: "Jay"
+excerpt:
+  "In this post, we add Voice2Text from Google's services into our chat
+  application to allow us to speak with the model, instead of type like a
+  plebian."
+tags: ["ai", "llms", "voice2text", "google", "external-services"]
 draft: true
 ---
 

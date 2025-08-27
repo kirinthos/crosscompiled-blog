@@ -33,20 +33,26 @@ jobs:
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
-        with:
-          # Automatically inject basePath in your Next.js configuration file and disable
-          # server side image optimization (https://nextjs.org/docs/api-reference/next/image#unoptimized)
-          #
-          # You may remove this line if you want to manage the configuration yourself
-          static_export: true
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Clear Next.js cache
+        run: rm -rf .next
 
       - name: Build with Next.js
         run: npm run build
         env:
           NODE_ENV: production
+
+      - name: Verify build output
+        run: |
+          echo "Checking build output..."
+          ls -la ./out || echo "out directory not found"
+          if [ -d "./out" ]; then
+            echo "Build output directory contents:"
+            find ./out -type f | head -20
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
