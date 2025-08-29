@@ -43,9 +43,10 @@ function remarkCallouts() {
               return '';
             }).join('\n\n');
             
-            // Clean up the content and close the div
+            // Clean up the content and convert emojis
             const cleanContent = content.replace(/^\s+|\s+$/g, '');
-            node.value += cleanContent + '</div>';
+            const contentWithEmojis = convertEmojis(cleanContent);
+            node.value += contentWithEmojis + '</div>';
             
             // Remove children since we've converted to HTML
             delete node.children;

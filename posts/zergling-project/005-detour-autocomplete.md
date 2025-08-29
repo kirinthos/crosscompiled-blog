@@ -92,6 +92,16 @@ things I've made when graphing (prior to AI that is), so I tend not to remember
 the minute details of what I need to do despite knowing overall the end state
 I'm trying to achieve.
 
+Here are the results!
+
+![Normal Distribution](/images/Normal.Distribution.png)
+![Poisson Distribution](/images/Poisson.Distribution.png)
+
+> [!thought] It wasn't until I pasted the pictures in here that I realized that
+> none of the lambda suggestions for the Poisson distribution were <= 4 which
+> show the various curves of the Poisson distribution...alas, that's not
+> _really_ the point of this so... :shrug:
+
 # Epilogue
 
 I'll try to remember when I do more leading the question style comment-based

@@ -226,7 +226,7 @@ pre:hover .copy-button {
 
 /* Info/Informational callouts */
 .prose .callout.info {
-  @apply bg-blue-50 border-blue-400 text-blue-900;
+  @apply bg-blue-100 border-blue-500 text-blue-900;
 }
 
 .prose .callout.info::before {
@@ -248,7 +248,7 @@ pre:hover .copy-button {
 
 /* Dire warning callouts */
 .prose .callout.danger {
-  @apply bg-red-50 border-red-500 text-red-900;
+  @apply bg-red-100 border-red-500 text-red-900;
   border-left-width: 6px;
 }
 
@@ -260,7 +260,7 @@ pre:hover .copy-button {
 
 /* Stream of consciousness / thoughts */
 .prose .callout.thought {
-  @apply bg-purple-50 border-purple-400 text-purple-900;
+  @apply bg-purple-100 border-purple-500 text-purple-900;
   font-style: italic;
 }
 
@@ -272,7 +272,7 @@ pre:hover .copy-button {
 
 /* Success/positive callouts */
 .prose .callout.success {
-  @apply bg-green-50 border-green-400 text-green-900;
+  @apply bg-green-100 border-green-500 text-green-900;
 }
 
 .prose .callout.success::before {
@@ -283,7 +283,7 @@ pre:hover .copy-button {
 
 /* Error callouts (alias for danger) */
 .prose .callout.error {
-  @apply bg-red-50 border-red-500 text-red-900;
+  @apply bg-red-100 border-red-500 text-red-900;
 }
 
 .prose .callout.error::before {
@@ -294,7 +294,7 @@ pre:hover .copy-button {
 
 /* Note callouts (neutral/gray) */
 .prose .callout.note {
-  @apply bg-gray-50 border-gray-400 text-gray-900;
+  @apply bg-gray-100 border-gray-500 text-gray-900;
 }
 
 .prose .callout.note::before {
@@ -305,7 +305,7 @@ pre:hover .copy-button {
 
 /* Tip callouts */
 .prose .callout.tip {
-  @apply bg-emerald-50 border-emerald-400 text-emerald-900;
+  @apply bg-emerald-100 border-emerald-500 text-emerald-900;
 }
 
 .prose .callout.tip::before {
@@ -316,7 +316,7 @@ pre:hover .copy-button {
 
 /* Prompt callouts (user prompts to AI) */
 .prose .callout.prompt {
-  @apply bg-indigo-50 border-indigo-400 text-indigo-900;
+  @apply bg-indigo-100 border-indigo-500 text-indigo-900;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaco', 'Consolas', monospace;
 }
 
@@ -328,7 +328,7 @@ pre:hover .copy-button {
 
 /* Robot/AI response callouts */
 .prose .callout.robot {
-  @apply bg-slate-50 border-slate-400 text-slate-900;
+  @apply bg-slate-100 border-slate-500 text-slate-900;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaco', 'Consolas', monospace;
 }
 
@@ -341,7 +341,7 @@ pre:hover .copy-button {
 /* Dark theme support for callouts */
 @media (prefers-color-scheme: dark) {
   .prose .callout.info {
-    @apply bg-blue-900/20 border-blue-400 text-blue-100;
+    @apply bg-blue-900/40 border-blue-400 text-blue-100;
   }
   
   .prose .callout.warning {
@@ -349,35 +349,35 @@ pre:hover .copy-button {
   }
   
   .prose .callout.danger {
-    @apply bg-red-900/20 border-red-400 text-red-100;
+    @apply bg-red-900/40 border-red-400 text-red-100;
   }
   
   .prose .callout.thought {
-    @apply bg-purple-900/20 border-purple-400 text-purple-100;
+    @apply bg-purple-900/40 border-purple-400 text-purple-100;
   }
   
   .prose .callout.success {
-    @apply bg-green-900/20 border-green-400 text-green-100;
+    @apply bg-green-900/40 border-green-400 text-green-100;
   }
   
   .prose .callout.error {
-    @apply bg-red-900/20 border-red-400 text-red-100;
+    @apply bg-red-900/40 border-red-400 text-red-100;
   }
   
   .prose .callout.note {
-    @apply bg-gray-900/20 border-gray-400 text-gray-100;
+    @apply bg-gray-900/40 border-gray-400 text-gray-100;
   }
   
   .prose .callout.tip {
-    @apply bg-emerald-900/20 border-emerald-400 text-emerald-100;
+    @apply bg-emerald-900/40 border-emerald-400 text-emerald-100;
   }
   
   .prose .callout.prompt {
-    @apply bg-indigo-900/20 border-indigo-400 text-indigo-100;
+    @apply bg-indigo-900/40 border-indigo-400 text-indigo-100;
   }
   
   .prose .callout.robot {
-    @apply bg-slate-900/20 border-slate-400 text-slate-100;
+    @apply bg-slate-900/40 border-slate-400 text-slate-100;
   }
 }
 

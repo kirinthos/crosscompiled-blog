@@ -43,8 +43,8 @@ export default function RootLayout({
         <div className="min-h-screen bg-background-secondary">
           {/* Header */}
           <header className="bg-background-primary shadow-sm border-b border-neutral-200 w-full">
-            <div className="w-full px-4 lg:px-8 py-6">
-              <div className="flex items-start justify-between ml-64 max-w-none">
+            <div className="w-full pl-16 pr-4 lg:px-8 py-6">
+              <div className="flex items-start justify-between lg:ml-64 max-w-none">
                 <div>
                   <h1 className="text-3xl font-bold text-text-primary">
                     <a href="/" className="hover:text-primary-600 transition-colors duration-200">
@@ -57,7 +57,7 @@ export default function RootLayout({
                 </div>
                 
                 {/* Social Links */}
-                <div className="flex items-center space-x-4 mt-1 mr-4">
+                <div className="flex items-center space-x-4 mt-1 lg:mr-4">
                   {/* Email */}
                   <a
                     href="mailto:blog@crosscompiled.com"
