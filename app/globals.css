@@ -237,7 +237,7 @@ pre:hover .copy-button {
 
 /* Warning callouts */
 .prose .callout.warning {
-  @apply bg-yellow-50 border-yellow-400 text-yellow-900;
+  @apply bg-yellow-200 border-yellow-500 text-yellow-900;
 }
 
 .prose .callout.warning::before {
@@ -345,7 +345,7 @@ pre:hover .copy-button {
   }
   
   .prose .callout.warning {
-    @apply bg-yellow-900/20 border-yellow-400 text-yellow-100;
+    @apply bg-yellow-900/40 border-yellow-400 text-yellow-100;
   }
   
   .prose .callout.danger {

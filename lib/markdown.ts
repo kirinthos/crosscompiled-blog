@@ -92,23 +92,58 @@ export interface BlogPost {
   author?: string;
   content: string;
   draft?: boolean;
+  category?: string;
+  filePath?: string;
+}
+
+// Helper function to recursively find all markdown files
+function findMarkdownFiles(dir: string, baseDir: string = dir): Array<{fileName: string, fullPath: string, relativePath: string}> {
+  const files: Array<{fileName: string, fullPath: string, relativePath: string}> = [];
+  const items = fs.readdirSync(dir);
+  
+  for (const item of items) {
+    const fullPath = path.join(dir, item);
+    const stat = fs.statSync(fullPath);
+    
+    if (stat.isDirectory()) {
+      // Recursively search subdirectories
+      files.push(...findMarkdownFiles(fullPath, baseDir));
+    } else if (item.endsWith('.md')) {
+      const relativePath = path.relative(baseDir, fullPath);
+      files.push({
+        fileName: item,
+        fullPath,
+        relativePath
+      });
+    }
+  }
+  
+  return files;
 }
 
 export function getSortedPostsData(): BlogPost[] {
-  // Get file names under /posts
-  const fileNames = fs.readdirSync(postsDirectory);
-  const allPostsData = fileNames
-    .filter(fileName => fileName.endsWith('.md'))
-    .map((fileName) => {
-      // Remove ".md" from file name to get id
-      const id = fileName.replace(/\.md$/, '');
+  // Get all markdown files recursively
+  const markdownFiles = findMarkdownFiles(postsDirectory);
+  const allPostsData = markdownFiles
+    .map(({fileName, fullPath, relativePath}) => {
+      // Create id from relative path without extension
+      const id = relativePath.replace(/\.md$/, '').replace(/\\/g, '/');
 
       // Read markdown file as string
-      const fullPath = path.join(postsDirectory, fileName);
       const fileContents = fs.readFileSync(fullPath, 'utf8');
 
       // Use gray-matter to parse the post metadata section
       const matterResult = matter(fileContents);
+
+      // Extract category from metadata or infer from directory structure
+      let category = matterResult.data.category;
+      if (!category) {
+        const pathParts = relativePath.split(path.sep);
+        if (pathParts.length > 1) {
+          // If in subdirectory, use directory name as category
+          category = pathParts[0];
+        }
+      }
 
       // Combine the data with the id
       return {
@@ -120,6 +155,8 @@ export function getSortedPostsData(): BlogPost[] {
         author: matterResult.data.author || '',
         content: matterResult.content,
         draft: matterResult.data.draft || false,
+        category: category || 'uncategorized',
+        filePath: relativePath,
         ...matterResult.data,
       } as BlogPost;
     })
@@ -137,19 +174,27 @@ export function getSortedPostsData(): BlogPost[] {
 
 export function getAllPostsData(): BlogPost[] {
   // Same as getSortedPostsData but includes drafts (for development)
-  const fileNames = fs.readdirSync(postsDirectory);
-  const allPostsData = fileNames
-    .filter(fileName => fileName.endsWith('.md'))
-    .map((fileName) => {
-      // Remove ".md" from file name to get id
-      const id = fileName.replace(/\.md$/, '');
+  const markdownFiles = findMarkdownFiles(postsDirectory);
+  const allPostsData = markdownFiles
+    .map(({fileName, fullPath, relativePath}) => {
+      // Create id from relative path without extension
+      const id = relativePath.replace(/\.md$/, '').replace(/\\/g, '/');
 
       // Read markdown file as string
-      const fullPath = path.join(postsDirectory, fileName);
       const fileContents = fs.readFileSync(fullPath, 'utf8');
 
       // Use gray-matter to parse the post metadata section
       const matterResult = matter(fileContents);
+
+      // Extract category from metadata or infer from directory structure
+      let category = matterResult.data.category;
+      if (!category) {
+        const pathParts = relativePath.split(path.sep);
+        if (pathParts.length > 1) {
+          // If in subdirectory, use directory name as category
+          category = pathParts[0];
+        }
+      }
 
       // Combine the data with the id
       return {
@@ -161,6 +206,8 @@ export function getAllPostsData(): BlogPost[] {
         author: matterResult.data.author || '',
         content: matterResult.content,
         draft: matterResult.data.draft || false,
+        category: category || 'uncategorized',
+        filePath: relativePath,
         ...matterResult.data,
       } as BlogPost;
     });
@@ -176,24 +223,33 @@ export function getAllPostsData(): BlogPost[] {
 }
 
 export function getAllPostIds() {
-  const fileNames = fs.readdirSync(postsDirectory);
-  return fileNames
-    .filter(fileName => fileName.endsWith('.md'))
-    .map((fileName) => {
-      return {
-        params: {
-          id: fileName.replace(/\.md$/, ''),
-        },
-      };
-    });
+  const markdownFiles = findMarkdownFiles(postsDirectory);
+  return markdownFiles.map(({relativePath}) => {
+    return {
+      params: {
+        id: relativePath.replace(/\.md$/, '').replace(/\\/g, '/'),
+      },
+    };
+  });
 }
 
 export async function getPostData(id: string): Promise<BlogPost> {
+  // Handle both direct files and subdirectory files
   const fullPath = path.join(postsDirectory, `${id}.md`);
   const fileContents = fs.readFileSync(fullPath, 'utf8');
 
   // Use gray-matter to parse the post metadata section
   const matterResult = matter(fileContents);
+
+  // Extract category from metadata or infer from directory structure
+  let category = matterResult.data.category;
+  if (!category) {
+    const pathParts = id.split('/');
+    if (pathParts.length > 1) {
+      // If in subdirectory, use directory name as category
+      category = pathParts[0];
+    }
+  }
 
   // Dynamically import KaTeX to avoid module resolution issues
   if (!rehypeKatex) {
@@ -236,6 +292,28 @@ export async function getPostData(id: string): Promise<BlogPost> {
     tags: matterResult.data.tags || [],
     author: matterResult.data.author || '',
     content: contentHtml,
+    category: category || 'uncategorized',
+    filePath: `${id}.md`,
     ...matterResult.data,
   } as BlogPost;
+}
+
+// Get all unique categories (includes drafts for navigation)
+export function getCategories(): string[] {
+  const posts = getAllPostsData();
+  const categories = new Set<string>();
+  
+  posts.forEach(post => {
+    if (post.category) {
+      categories.add(post.category);
+    }
+  });
+  
+  return Array.from(categories).sort();
+}
+
+// Get posts by category
+export function getPostsByCategory(category: string): BlogPost[] {
+  const posts = getSortedPostsData();
+  return posts.filter(post => post.category === category);
 }
