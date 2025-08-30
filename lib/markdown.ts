@@ -35,13 +35,22 @@ function remarkCallouts() {
             node.type = 'html';
             node.value = `<div class="callout ${calloutType}">`;
             
-            // Process the content
+            // Process the content with proper markdown line break handling
             const content = node.children.map((child: any) => {
               if (child.type === 'paragraph') {
-                return child.children.map((c: any) => c.value || '').join('');
+                return child.children.map((c: any) => {
+                  if (c.type === 'text') {
+                    // Handle markdown-style line breaks: only double newlines create breaks
+                    // Single newlines (from editor wrapping) are treated as spaces
+                    return (c.value || '')
+                      .replace(/\n\n+/g, '<br><br>') // Double+ newlines become paragraph breaks
+                      .replace(/\n/g, ' '); // Single newlines become spaces
+                  }
+                  return c.value || '';
+                }).join('');
               }
               return '';
-            }).join('\n\n');
+            }).join('<br><br>');
             
             // Clean up the content and convert emojis
             const cleanContent = content.replace(/^\s+|\s+$/g, '');
@@ -122,7 +131,7 @@ function findMarkdownFiles(dir: string, baseDir: string = dir): Array<{fileName:
   return files;
 }
 
-export function getSortedPostsData(): BlogPost[] {
+export function getSortedPostsData(includeDrafts: boolean = false): BlogPost[] {
   // Get all markdown files recursively
   const markdownFiles = findMarkdownFiles(postsDirectory);
   const allPostsData = markdownFiles
@@ -161,57 +170,7 @@ export function getSortedPostsData(): BlogPost[] {
         ...matterResult.data,
       } as BlogPost;
     })
-    .filter(post => !post.draft); // Filter out draft posts in production
-
-  // Sort posts by date
-  return allPostsData.sort((a, b) => {
-    if (a.date < b.date) {
-      return 1;
-    } else {
-      return -1;
-    }
-  });
-}
-
-export function getAllPostsData(): BlogPost[] {
-  // Same as getSortedPostsData but includes drafts (for development)
-  const markdownFiles = findMarkdownFiles(postsDirectory);
-  const allPostsData = markdownFiles
-    .map(({fileName, fullPath, relativePath}) => {
-      // Create id from relative path without extension
-      const id = relativePath.replace(/\.md$/, '').replace(/\\/g, '/');
-
-      // Read markdown file as string
-      const fileContents = fs.readFileSync(fullPath, 'utf8');
-
-      // Use gray-matter to parse the post metadata section
-      const matterResult = matter(fileContents);
-
-      // Extract category from metadata or infer from directory structure
-      let category = matterResult.data.category;
-      if (!category) {
-        const pathParts = relativePath.split(path.sep);
-        if (pathParts.length > 1) {
-          // If in subdirectory, use directory name as category
-          category = pathParts[0];
-        }
-      }
-
-      // Combine the data with the id
-      return {
-        id,
-        title: matterResult.data.title || id,
-        date: matterResult.data.date || new Date().toISOString(),
-        excerpt: matterResult.data.excerpt || '',
-        tags: matterResult.data.tags || [],
-        author: matterResult.data.author || '',
-        content: matterResult.content,
-        draft: matterResult.data.draft || false,
-        category: category || 'uncategorized',
-        filePath: relativePath,
-        ...matterResult.data,
-      } as BlogPost;
-    });
+    .filter(post => includeDrafts || !post.draft);
 
   // Sort posts by date
   return allPostsData.sort((a, b) => {
@@ -300,8 +259,8 @@ export async function getPostData(id: string): Promise<BlogPost> {
 }
 
 // Get all unique categories (includes drafts for navigation)
-export function getCategories(): string[] {
-  const posts = getAllPostsData();
+export function getCategories(includeDrafts: boolean = false): string[] {
+  const posts = getSortedPostsData(includeDrafts);
   const categories = new Set<string>();
   
   posts.forEach(post => {

@@ -14,8 +14,8 @@ export default async function Post({ params }: { params: { slug: string[] } }) {
   const postData = await getPostData(id);
 
   return (
-    <article className="bg-background-primary rounded-lg shadow-md overflow-hidden border border-neutral-100">
-      <div className="px-8 py-6">
+    <article className="bg-background-primary lg:rounded-lg lg:shadow-md overflow-hidden lg:border lg:border-neutral-100">
+      <div className="px-4 py-4 lg:px-8 lg:py-6">
         <Link 
           href="/" 
           className="inline-flex items-center text-primary-600 hover:text-primary-800 mb-6 transition-colors duration-200 font-medium"

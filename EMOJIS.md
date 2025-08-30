@@ -1,6 +1,7 @@
 # Emoji Support
 
-This blog supports Slack-style emoji syntax using `:emoji_name:` format.
+This blog supports Slack-style emoji syntax using `:emoji_name:` format,
+including both standard Unicode emojis and custom PNG emojis.
 
 ## Usage
 
@@ -12,7 +13,34 @@ I'm so excited about this! :smile: :tada:
 This is amazing work :thumbsup: :fire:
 
 Thanks for reading :pray: :heart:
+
+I'm confused about this :head-scratch:
 ```
+
+## Custom PNG Emojis
+
+In addition to standard Unicode emojis, you can use custom PNG emojis for
+personalized expressions:
+
+### Available Custom Emojis
+
+- `:head-scratch:` - A head-scratching emoji for confusion or puzzlement
+
+### Adding New Custom Emojis
+
+To add your own custom PNG emojis:
+
+1. **Add the PNG file** to `/public/images/` (recommended size: 32x32px)
+2. **Update the emoji map** in `/lib/emojis.ts`:
+   ```typescript
+   export const customEmojiMap: Record<string, string> = {
+     "head-scratch": "head-scratch.png",
+     "your-emoji-name": "your-emoji-file.png", // Add here
+   };
+   ```
+3. **Use in your posts** with `:your-emoji-name:`
+
+Custom emojis automatically match your text size and flow inline seamlessly.
 
 ## Available Emojis
 

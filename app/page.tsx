@@ -1,12 +1,10 @@
 import Link from 'next/link';
-import { getSortedPostsData, getAllPostsData, BlogPost } from '@/lib/markdown';
+import { getSortedPostsData, BlogPost } from '@/lib/markdown';
 import { format, parseISO } from 'date-fns';
 
 export default function Home() {
   // In development, show all posts including drafts
-  const allPostsData = process.env.NODE_ENV === 'development' 
-    ? getAllPostsData() 
-    : getSortedPostsData();
+  const allPostsData = getSortedPostsData(process.env.NODE_ENV === 'development');
 
   return (
     <div className="space-y-8">

@@ -2,7 +2,7 @@ import './globals.css'
 import { Inter } from 'next/font/google'
 import MermaidInitializer from '../components/MermaidInitializer'
 import CategoryNavigation from '../components/CategoryNavigation'
-import { getCategories, getPostsByCategory, getSortedPostsData, getAllPostsData } from '@/lib/markdown'
+import { getCategories, getPostsByCategory, getSortedPostsData } from '@/lib/markdown'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -17,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   // Get categories and posts for navigation
-  const categories = getCategories();
+  const categories = getCategories(process.env.NODE_ENV === 'development');
   const postsByCategory: Record<string, Array<{
     id: string;
     title: string;
@@ -26,8 +26,8 @@ export default function RootLayout({
   }>> = {};
 
   categories.forEach(category => {
-    // Use getAllPostsData to include drafts in navigation
-    const allPosts = getAllPostsData();
+    // In development, show all posts including drafts; in production, exclude drafts
+    const allPosts = getSortedPostsData(process.env.NODE_ENV === 'development');
     const posts = allPosts.filter(post => post.category === category);
     postsByCategory[category] = posts.map(post => ({
       id: post.id,
@@ -96,7 +96,7 @@ export default function RootLayout({
 
             {/* Main Content */}
             <main className="flex-1">
-              <div className="max-w-4xl mx-auto px-4 lg:px-8 py-8">
+              <div className="max-w-4xl mx-auto lg:px-8 py-8">
                 {children}
               </div>
             </main>
@@ -106,7 +106,7 @@ export default function RootLayout({
           <footer className="bg-background-primary border-t border-neutral-200 mt-16">
             <div className="lg:ml-64 xl:ml-72">
               <div className="max-w-4xl mx-auto px-4 lg:px-8 py-8 text-center text-text-secondary">
-                <p>&copy; 2024 CrossCompiled Blog. Built with Next.js and deployed with GitHub Actions.</p>
+                <p>&copy; 2025 CrossCompiled Blog.</p>
               </div>
             </div>
           </footer>

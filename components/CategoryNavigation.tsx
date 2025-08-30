@@ -53,7 +53,7 @@ export default function CategoryNavigation({ categories, postsByCategory }: Cate
       {/* Mobile toggle button */}
       <button
         onClick={toggleSidebar}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-background-primary border border-neutral-200 rounded-md shadow-md"
+        className="lg:hidden fixed top-4 left-4 z-20 p-2 bg-background-primary border border-neutral-200 rounded-md shadow-md"
         aria-label="Toggle navigation"
       >
         <svg
