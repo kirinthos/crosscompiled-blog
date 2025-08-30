@@ -7,7 +7,6 @@ excerpt:
   Teach me to investigate it!"
 tags: ["cursor", "llms", "editor", "techniques", "investigation", "codebase"]
 category: "development-tools"
-draft: true
 ---
 
 # Changing CSS Styles of the Blog
