@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { format, parseISO } from 'date-fns';
 
 interface CategoryNavigationProps {
   categories: string[];
@@ -169,7 +170,7 @@ export default function CategoryNavigation({ categories, postsByCategory }: Cate
                         >
                           <div className="break-words leading-tight">{post.title}</div>
                           <div className="text-xs text-text-secondary mt-1">
-                            {new Date(post.date).toLocaleDateString()}
+                            {format(parseISO(post.date), 'MMM d, yyyy')}
                           </div>
                         </Link>
                       ))}
