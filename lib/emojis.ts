@@ -60,6 +60,8 @@ export const emojiMap: Record<string, string> = {
   'thinking': '🤔',
   'facepalm': '🤦',
   'shrug': '🤷',
+  'vomit': '🤮',
+  'smirk': '😏',
 
   // People & Body
   'thumbsup': '👍',

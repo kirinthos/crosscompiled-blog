@@ -2,10 +2,13 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { remark } from 'remark';
-import html from 'remark-html';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
 import gfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeHighlight from 'rehype-highlight';
+import rehypeRaw from 'rehype-raw';
+import { common } from 'lowlight';
 import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 // Dynamic import for KaTeX to avoid module resolution issues in development
@@ -72,8 +75,10 @@ function remarkMermaid() {
     visit(tree, 'code', (node: any) => {
       if (node.lang === 'mermaid') {
         // Convert mermaid code block to a custom HTML element
+        // Properly escape the mermaid data to prevent JavaScript errors
+        const escapedData = encodeURIComponent(node.value).replace(/'/g, '%27').replace(/"/g, '%22');
         node.type = 'html';
-        node.value = `<div class="mermaid-diagram" data-mermaid="${encodeURIComponent(node.value)}"></div>`;
+        node.value = `<div class="mermaid-diagram" data-mermaid="${escapedData}"></div>`;
       }
     });
   };
@@ -228,8 +233,16 @@ export async function getPostData(id: string): Promise<BlogPost> {
     .use(remarkMermaid) // Custom Mermaid diagram handling
     .use(remarkEmojis) // Custom emoji conversion
     .use(remarkMath) // Math notation support
-    .use(html, { sanitize: false })
-    .use(rehypeHighlight) // Syntax highlighting for code blocks
+    .use(remarkRehype, { allowDangerousHtml: true }) // Convert remark AST to rehype AST
+    // After remarkRehype, we've converted the markdown AST into the html AST
+    // so we'll apply the rehype plugins now
+    .use(rehypeKatex) // Math rendering (dynamically loaded)
+    .use(rehypeHighlight, {
+      // Configure supported languages
+      languages: {
+        ...common,
+      }
+    }) // Syntax highlighting for code blocks
     .use(rehypeSlug) // Add IDs to headings
     .use(rehypeAutolinkHeadings, {
       // Add clickable links to headings
@@ -238,7 +251,8 @@ export async function getPostData(id: string): Promise<BlogPost> {
         className: ['heading-link']
       }
     })
-    .use(rehypeKatex) // Math rendering (dynamically loaded)
+    .use(rehypeRaw)
+    .use(rehypeStringify) // Convert rehype AST to HTML string
     .process(matterResult.content);
   
   const contentHtml = processedContent.toString();

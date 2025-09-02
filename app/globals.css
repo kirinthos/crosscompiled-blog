@@ -5,6 +5,9 @@
 /* Import KaTeX CSS for math rendering */
 @import 'katex/dist/katex.min.css';
 
+/* Import highlight.js CSS for syntax highlighting */
+@import 'highlight.js/styles/github.css';
+
 /* Enhanced code highlighting styles */
 pre {
   @apply bg-background-accent p-4 rounded-lg overflow-x-auto border border-neutral-200 relative;
