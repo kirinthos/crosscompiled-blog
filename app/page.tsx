@@ -11,7 +11,7 @@ export default function Home() {
       <div>
         <h1 className="text-4xl font-bold text-text-primary mb-4">Latest Posts</h1>
         <p className="text-xl text-text-secondary">
-          Welcome to my blog where I share insights about software development, engineering practices, and technology.
+          Welcome to my blog where I share insights about software development, engineering practices, and AI technology.
         </p>
       </div>
 

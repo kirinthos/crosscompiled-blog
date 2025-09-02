@@ -52,7 +52,7 @@ export default function RootLayout({
                     </a>
                   </h1>
                   <p className="text-text-secondary mt-2">
-                    Cross compiled perspective on technology.
+                    Cross compiled perspective on AI technology.
                   </p>
                 </div>
                 
