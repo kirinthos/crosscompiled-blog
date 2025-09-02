@@ -87,11 +87,79 @@ function remarkMermaid() {
 // Custom remark plugin to handle Slack-style emoji syntax
 function remarkEmojis() {
   return (tree: any) => {
-    visit(tree, 'text', (node: any) => {
+    visit(tree, 'text', (node: any, index: number | undefined, parent: any) => {
       if (node.value && typeof node.value === 'string') {
-        const convertedText = convertEmojis(node.value);
-        if (convertedText !== node.value) {
-          node.value = convertedText;
+        // Check if this text contains emoji patterns
+        const emojiPattern = /:([a-zA-Z0-9-+-]+):/g;
+        const matches: RegExpMatchArray[] = Array.from(node.value.matchAll(emojiPattern));
+        
+        if (matches.length > 0) {
+          const newNodes: any[] = [];
+          let lastIndex = 0;
+          
+          for (const match of matches) {
+            const fullMatch = match[0];
+            const emojiName = match[1];
+            const matchStart = match.index!;
+            const matchEnd = matchStart + fullMatch.length;
+            
+            // Add text before the emoji (if any)
+            if (matchStart > lastIndex) {
+              const textBefore = node.value.substring(lastIndex, matchStart);
+              if (textBefore) {
+                newNodes.push({
+                  type: 'text',
+                  value: textBefore
+                });
+              }
+            }
+            
+            // Check for custom emoji first
+            const lowerName = emojiName.toLowerCase();
+            const { customEmojiMap, emojiMap } = require('./emojis');
+            const customEmoji = customEmojiMap[lowerName];
+            
+            if (customEmoji) {
+              // Create HTML node for custom emoji
+              newNodes.push({
+                type: 'html',
+                value: `<img src="/images/${customEmoji}" alt="${emojiName}" class="inline-emoji" style="display: inline; width: 1.2em; height: 1.2em; vertical-align: text-bottom; margin: 0 0.1em;" />`
+              });
+            } else {
+              // Check for Unicode emoji
+              const unicodeEmoji = emojiMap[lowerName];
+              if (unicodeEmoji) {
+                newNodes.push({
+                  type: 'text',
+                  value: unicodeEmoji
+                });
+              } else {
+                // Keep original text if emoji not found
+                newNodes.push({
+                  type: 'text',
+                  value: fullMatch
+                });
+              }
+            }
+            
+            lastIndex = matchEnd;
+          }
+          
+          // Add remaining text after the last emoji (if any)
+          if (lastIndex < node.value.length) {
+            const textAfter = node.value.substring(lastIndex);
+            if (textAfter) {
+              newNodes.push({
+                type: 'text',
+                value: textAfter
+              });
+            }
+          }
+          
+          // Replace the current node with the new nodes
+          if (parent && typeof index === 'number') {
+            parent.children.splice(index, 1, ...newNodes);
+          }
         }
       }
     });

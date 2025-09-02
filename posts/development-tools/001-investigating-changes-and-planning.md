@@ -67,7 +67,7 @@ something peculiar: `background-color: rgb(113 63 18 / 0.4);`
 
 > [!warning] `/ 0.4`
 
-:head-scratch:
+scratchy scratch :head-scratch:
 
 It looks like we're setting it to 40% opacity. I take a peek at the
 [Tailwind docs on colors](https://tailwindcss.com/docs/colors) where they
