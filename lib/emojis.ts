@@ -62,6 +62,7 @@ export const emojiMap: Record<string, string> = {
   'shrug': '🤷',
   'vomit': '🤮',
   'smirk': '😏',
+  'robot': '🤖',
 
   // People & Body
   'thumbsup': '👍',

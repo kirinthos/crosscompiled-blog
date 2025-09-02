@@ -47,7 +47,7 @@ What if I add more logic to `getSortedPostsData`? WIll the AI know to update the
 sitemap generator? I have mentioned many times before that I fear the day I have
 to modify some of the code in the Zergling project...well now I'm facing that in
 the blog development as well. This project is far simpler, so I will try to
-develop some strategies while writing this blog that we can use in the Zerglingn
+develop some strategies while writing this blog that we can use in the Zergling
 project.
 
 Let's consider our function `getSortedPostsData`:
@@ -143,7 +143,7 @@ Something I despise as a programmer. Maintaining the same logic in multiple
 locations. We'll revisit this one day...I hope that this walkthrough of
 discovering an issue with the build, then realizing that this solution is
 required anyway due to the nature of my project: Typescript vs Node build
-scripts.
+scripts -- helps you.
 
 # Research Time
 
@@ -388,6 +388,9 @@ graph TD
 
 (Look at those disgusting self-loop arrows :vomit:)
 
+If you'll recall, this is exactly what the :robot: said we were doing in
+[The Fix](#the-fix)!
+
 I adjust the code to work properly, assuring we have `allowDangerousHtml` set,
 which enables us to have embedded html in markdown. This is the effect of our
 callout, mermaid, emoji, and math plugins! Then we convert the Markdown AST into
@@ -441,19 +444,25 @@ as well. Note that I have a "no bullshit" custom GPT, ymmv.
 > "/posts/blog-development/001-adding-a-sitemap/installHook.js.map" in
 > "generateStaticParams()", which is required with "output: export" config
 
-I'll show these results in images to save my hands.
+I'll show these results in images to save my hands. First is Cursor, second is ChatGPT.
 
 ![Cursor installHook.js.map Suggested](/images/Cursor.InstallHook.Suggested.png)
 
 ![ChatGPT installHook.js.map Suggested](/images/ChatGPT.InstallHook.Suggested.png)
 
-They're actually pretty similar suggestions! ChatGPT correctly deduced that this is a NextJS application as well, great.
+They're actually pretty similar suggestions! ChatGPT correctly deduced that this
+is a NextJS application as well, great.
 
-I had to look this up, too. Guess what I [found](https://www.reddit.com/r/remixrun/comments/1h73a3q/error_no_route_matches_url_installhookjsmap/)?
+I had to look this up, too. Guess what I
+[found](https://www.reddit.com/r/remixrun/comments/1h73a3q/error_no_route_matches_url_installhookjsmap/)?
 
-> Do you have a browser extension that may be looking for this file? React Dev Tools maybe?
+> Do you have a browser extension that may be looking for this file? React Dev
+> Tools maybe?
 
-Yeah, I don't use react, so thought the dev tools may help out and it turns out that this is what is requesting the installHook.js.map! After attempting to even find an installHook.js, I couldn't in this project, so we'll leave this red herring in the sea.
+Yeah, I don't use react, so thought the dev tools may help out and it turns out
+that this is what is requesting the installHook.js.map! After attempting to even
+find an installHook.js, I couldn't in this project, so we'll leave this red
+herring in the sea.
 
 My intuition on when to check the output is sharpening!
 
@@ -461,6 +470,6 @@ My intuition on when to check the output is sharpening!
 
 Damn. We're _two detours deep!_ Let's return to my other blog post, the original
 detour, and talk about
-[Seeding the Context](/posts/development-tools/002-seeding-the-context.md) which
+[Seeding the Context](/posts/development-tools/002-seeding-the-context/) which
 will be a technique that (hopefully) proves quite fruitful in architecting
 complex systems.
