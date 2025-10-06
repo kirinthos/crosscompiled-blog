@@ -1,6 +1,7 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import MermaidInitializer from '../components/MermaidInitializer'
+import VideoInitializer from '../components/VideoInitializer'
 import CategoryNavigation from '../components/CategoryNavigation'
 import { getCategories, getPostsByCategory, getSortedPostsData } from '@/lib/markdown'
 
@@ -112,6 +113,7 @@ export default function RootLayout({
           </footer>
         </div>
         <MermaidInitializer />
+        <VideoInitializer />
       </body>
     </html>
   )

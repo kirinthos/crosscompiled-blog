@@ -3,7 +3,7 @@ export const emojiMap: Record<string, string> = {
   // Smileys & Emotion
   'smile': '😄',
   'grinning': '😀',
-  'joy': '😂',
+  'rofl': '😂',
   'smiley': '😃',
   'laughing': '😆',
   'wink': '😉',
@@ -67,6 +67,7 @@ export const emojiMap: Record<string, string> = {
   // People & Body
   'thumbsup': '👍',
   'thumbsdown': '👎',
+  'fingers-crossed': '🤞',
   'ok-hand': '👌',
   'punch': '👊',
   'fist': '✊',

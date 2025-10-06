@@ -356,6 +356,118 @@ pre:hover .copy-button {
   line-height: 20px;
 }
 
+/* Inline formatting within callouts - inherit parent callout colors */
+.prose .callout.info strong,
+.prose .callout.info em,
+.prose .callout.info a {
+  @apply text-blue-900;
+}
+
+.prose .callout.warning strong,
+.prose .callout.warning em,
+.prose .callout.warning a {
+  @apply text-yellow-800;
+}
+
+.prose .callout.danger strong,
+.prose .callout.danger em,
+.prose .callout.danger a {
+  @apply text-red-900;
+}
+
+.prose .callout.thought strong,
+.prose .callout.thought em,
+.prose .callout.thought a {
+  @apply text-purple-900;
+}
+
+.prose .callout.success strong,
+.prose .callout.success em,
+.prose .callout.success a {
+  @apply text-green-900;
+}
+
+.prose .callout.error strong,
+.prose .callout.error em,
+.prose .callout.error a {
+  @apply text-red-900;
+}
+
+.prose .callout.note strong,
+.prose .callout.note em,
+.prose .callout.note a {
+  @apply text-gray-900;
+}
+
+.prose .callout.tip strong,
+.prose .callout.tip em,
+.prose .callout.tip a {
+  @apply text-emerald-900;
+}
+
+.prose .callout.prompt strong,
+.prose .callout.prompt em,
+.prose .callout.prompt a {
+  @apply text-indigo-900;
+}
+
+.prose .callout.robot strong,
+.prose .callout.robot em,
+.prose .callout.robot a {
+  @apply text-slate-900;
+}
+
+/* Code blocks within callouts should maintain syntax highlighting */
+.prose .callout code {
+  @apply bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaco', 'Consolas', monospace;
+}
+
+/* Links in callouts should have hover effects while maintaining color */
+.prose .callout a {
+  @apply underline hover:no-underline transition-all duration-200;
+}
+
+.prose .callout.info a:hover {
+  @apply bg-blue-200;
+}
+
+.prose .callout.warning a:hover {
+  @apply bg-yellow-300;
+}
+
+.prose .callout.danger a:hover {
+  @apply bg-red-200;
+}
+
+.prose .callout.thought a:hover {
+  @apply bg-purple-200;
+}
+
+.prose .callout.success a:hover {
+  @apply bg-green-200;
+}
+
+.prose .callout.error a:hover {
+  @apply bg-red-200;
+}
+
+.prose .callout.note a:hover {
+  @apply bg-gray-200;
+}
+
+.prose .callout.tip a:hover {
+  @apply bg-emerald-200;
+}
+
+.prose .callout.prompt a:hover {
+  @apply bg-indigo-200;
+}
+
+.prose .callout.robot a:hover {
+  @apply bg-slate-200;
+}
+
 
 
 /* Footnote styles */
@@ -365,6 +477,92 @@ pre:hover .copy-button {
 
 .prose .footnote-backref {
   @apply text-primary-600 no-underline ml-1;
+}
+
+/* Video Player Styles */
+.video-player-container {
+  @apply my-6 w-full;
+}
+
+.video-player-container video {
+  @apply w-full h-auto max-w-full;
+}
+
+/* Custom slider styles for video controls */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.slider::-webkit-slider-track {
+  @apply bg-gray-600 rounded-lg h-1;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  @apply bg-white rounded-full h-3 w-3 shadow-md;
+}
+
+.slider::-moz-range-track {
+  @apply bg-gray-600 rounded-lg h-1 border-0;
+}
+
+.slider::-moz-range-thumb {
+  @apply bg-white rounded-full h-3 w-3 shadow-md border-0;
+}
+
+/* Video embed placeholder styles */
+.video-embed {
+  @apply my-6 w-full;
+}
+
+.video-player-wrapper {
+  @apply my-6 w-full;
+}
+
+/* Responsive video container */
+@media (max-width: 768px) {
+  .video-player-container {
+    @apply mx-0;
+  }
+  
+  .video-player-container .absolute.bottom-0 {
+    @apply p-2;
+  }
+  
+  .video-player-container .flex.items-center.space-x-3 {
+    @apply space-x-2;
+  }
+  
+  .video-player-container .w-16 {
+    @apply w-12;
+  }
+}
+
+/* Fullscreen video styles */
+.video-player-container:fullscreen {
+  background-color: black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-player-container:fullscreen video {
+  @apply max-h-full max-w-full object-contain;
+}
+
+/* Dark theme support for video controls */
+@media (prefers-color-scheme: dark) {
+  .slider::-webkit-slider-track {
+    @apply bg-gray-400;
+  }
+  
+  .slider::-moz-range-track {
+    @apply bg-gray-400;
+  }
 }
 
 /* Print styles */
@@ -379,5 +577,10 @@ pre:hover .copy-button {
   
   .prose a {
     @apply text-black underline;
+  }
+  
+  /* Hide video controls in print */
+  .video-player-container .absolute {
+    @apply hidden;
   }
 }

@@ -38,16 +38,38 @@ function remarkCallouts() {
             node.type = 'html';
             node.value = `<div class="callout ${calloutType}">`;
             
-            // Process the content with proper markdown line break handling
+            // Process the content with proper markdown line break handling and inline formatting
             const content = node.children.map((child: any) => {
               if (child.type === 'paragraph') {
                 return child.children.map((c: any) => {
                   if (c.type === 'text') {
                     // Handle markdown-style line breaks: only double newlines create breaks
                     // Single newlines (from editor wrapping) are treated as spaces
-                    return (c.value || '')
+                    let text = (c.value || '')
                       .replace(/\n\n+/g, '<br><br>') // Double+ newlines become paragraph breaks
                       .replace(/\n/g, ' '); // Single newlines become spaces
+                    
+                    // Process inline markdown formatting
+                    text = text
+                      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') // Bold
+                      .replace(/\*([^*]+)\*/g, '<em>$1</em>') // Italic
+                      .replace(/`([^`]+)`/g, '<code>$1</code>') // Inline code
+                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>'); // Links
+                    
+                    return text;
+                  }
+                  if (c.type === 'strong') {
+                    return `<strong>${c.children.map((sc: any) => sc.value || '').join('')}</strong>`;
+                  }
+                  if (c.type === 'emphasis') {
+                    return `<em>${c.children.map((sc: any) => sc.value || '').join('')}</em>`;
+                  }
+                  if (c.type === 'inlineCode') {
+                    return `<code>${c.value || ''}</code>`;
+                  }
+                  if (c.type === 'link') {
+                    const linkText = c.children.map((sc: any) => sc.value || '').join('');
+                    return `<a href="${c.url}">${linkText}</a>`;
                   }
                   return c.value || '';
                 }).join('');
@@ -79,6 +101,141 @@ function remarkMermaid() {
         const escapedData = encodeURIComponent(node.value).replace(/'/g, '%27').replace(/"/g, '%22');
         node.type = 'html';
         node.value = `<div class="mermaid-diagram" data-mermaid="${escapedData}"></div>`;
+      }
+    });
+  };
+}
+
+// Custom remark plugin to handle video embeds
+function remarkVideo() {
+  return (tree: any) => {
+    visit(tree, 'paragraph', (node: any) => {
+      // Look for paragraphs that contain only a video link
+      if (node.children && node.children.length === 1) {
+        const child = node.children[0];
+        
+        // Handle video syntax: ![Video description](path/to/video.mp4)
+        if (child.type === 'image' && child.url && child.url.match(/\.(mp4|webm|ogg|mov)$/i)) {
+          const videoProps = {
+            src: child.url,
+            alt: child.alt || '',
+            controls: true
+          };
+          
+          // Parse additional attributes from alt text if present
+          // Format: ![Video description | autoplay | loop | muted | width:800 | height:600](video.mp4)
+          if (child.alt) {
+            const parts = child.alt.split('|').map(p => p.trim());
+            videoProps.alt = parts[0] || '';
+            
+            for (let i = 1; i < parts.length; i++) {
+              const part = parts[i].toLowerCase();
+              if (part === 'autoplay') {
+                (videoProps as any).autoplay = true;
+              } else if (part === 'loop') {
+                (videoProps as any).loop = true;
+              } else if (part === 'muted') {
+                (videoProps as any).muted = true;
+              } else if (part === 'no-controls') {
+                videoProps.controls = false;
+              } else if (part.startsWith('width:')) {
+                (videoProps as any).width = part.split(':')[1];
+              } else if (part.startsWith('height:')) {
+                (videoProps as any).height = part.split(':')[1];
+              } else if (part.startsWith('poster:')) {
+                (videoProps as any).poster = part.split(':')[1];
+              }
+            }
+          }
+          
+          // Convert to video player component
+          const propsString = Object.entries(videoProps)
+            .map(([key, value]) => {
+              if (typeof value === 'boolean') {
+                return value ? key : '';
+              }
+              return `${key}="${value}"`;
+            })
+            .filter(Boolean)
+            .join(' ');
+          
+          node.type = 'html';
+          node.value = `<div class="video-embed" data-video-props='${JSON.stringify(videoProps)}'></div>`;
+        }
+        
+        // Handle direct video links in text: [video](path/to/video.mp4)
+        else if (child.type === 'link' && child.url && child.url.match(/\.(mp4|webm|ogg|mov)$/i)) {
+          const videoProps = {
+            src: child.url,
+            alt: child.children?.[0]?.value || 'Video',
+            controls: true
+          };
+          
+          node.type = 'html';
+          node.value = `<div class="video-embed" data-video-props='${JSON.stringify(videoProps)}'></div>`;
+        }
+      }
+    });
+    
+    // Also handle video syntax in text nodes: @video[description](path.mp4)
+    visit(tree, 'text', (node: any, index: number | undefined, parent: any) => {
+      if (node.value && typeof node.value === 'string') {
+        const videoPattern = /@video\[([^\]]*)\]\(([^)]+\.(?:mp4|webm|ogg|mov))\)/gi;
+        const matches: RegExpMatchArray[] = Array.from(node.value.matchAll(videoPattern));
+        
+        if (matches.length > 0) {
+          const newNodes: any[] = [];
+          let lastIndex = 0;
+          
+          for (const match of matches) {
+            const fullMatch = match[0];
+            const description = match[1];
+            const videoUrl = match[2];
+            const matchStart = match.index!;
+            const matchEnd = matchStart + fullMatch.length;
+            
+            // Add text before the video (if any)
+            if (matchStart > lastIndex) {
+              const textBefore = node.value.substring(lastIndex, matchStart);
+              if (textBefore) {
+                newNodes.push({
+                  type: 'text',
+                  value: textBefore
+                });
+              }
+            }
+            
+            // Add video embed
+            const videoProps = {
+              src: videoUrl,
+              alt: description || 'Video',
+              controls: true
+            };
+            
+            newNodes.push({
+              type: 'html',
+              value: `<div class="video-embed" data-video-props='${JSON.stringify(videoProps)}'></div>`
+            });
+            
+            lastIndex = matchEnd;
+          }
+          
+          // Add remaining text after the last video (if any)
+          if (lastIndex < node.value.length) {
+            const textAfter = node.value.substring(lastIndex);
+            if (textAfter) {
+              newNodes.push({
+                type: 'text',
+                value: textAfter
+              });
+            }
+          }
+          
+          // Replace the current node with the new nodes
+          if (parent && typeof index === 'number') {
+            parent.children.splice(index, 1, ...newNodes);
+          }
+        }
       }
     });
   };
@@ -238,7 +395,7 @@ export function getSortedPostsData(includeDrafts: boolean = false): BlogPost[] {
         author: matterResult.data.author || '',
         content: matterResult.content,
         draft: matterResult.data.draft || false,
-        category: category || 'uncategorized',
+        category: category || 'Miscellaneous',
         filePath: relativePath,
         ...matterResult.data,
       } as BlogPost;
@@ -299,6 +456,7 @@ export async function getPostData(id: string): Promise<BlogPost> {
     .use(gfm) // GitHub Flavored Markdown support
     .use(remarkCallouts) // Custom callout boxes
     .use(remarkMermaid) // Custom Mermaid diagram handling
+    .use(remarkVideo) // Custom video embed handling
     .use(remarkEmojis) // Custom emoji conversion
     .use(remarkMath) // Math notation support
     .use(remarkRehype, { allowDangerousHtml: true }) // Convert remark AST to rehype AST
