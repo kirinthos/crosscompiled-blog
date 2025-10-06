@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google'
 import MermaidInitializer from '../components/MermaidInitializer'
 import VideoInitializer from '../components/VideoInitializer'
 import CategoryNavigation from '../components/CategoryNavigation'
-import { getCategories, getPostsByCategory, getSortedPostsData } from '@/lib/markdown'
+import { getCategories, getSortedPostsData } from '@/lib/markdown'
 
 const inter = Inter({ subsets: ['latin'] })
 

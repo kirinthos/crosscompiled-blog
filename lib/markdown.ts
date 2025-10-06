@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// disable no-explicit-any for the entire file because the AI doesn't know how to type up plugins
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
@@ -14,7 +16,7 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 // Dynamic import for KaTeX to avoid module resolution issues in development
 let rehypeKatex: any = null;
 import { visit } from 'unist-util-visit';
-import { convertEmojis } from './emojis';
+import { convertEmojis, customEmojiMap, emojiMap } from './emojis';
 
 const postsDirectory = path.join(process.cwd(), 'posts');
 
@@ -148,17 +150,6 @@ function remarkVideo() {
             }
           }
           
-          // Convert to video player component
-          const propsString = Object.entries(videoProps)
-            .map(([key, value]) => {
-              if (typeof value === 'boolean') {
-                return value ? key : '';
-              }
-              return `${key}="${value}"`;
-            })
-            .filter(Boolean)
-            .join(' ');
-          
           node.type = 'html';
           node.value = `<div class="video-embed" data-video-props='${JSON.stringify(videoProps)}'></div>`;
         }
@@ -273,7 +264,6 @@ function remarkEmojis() {
             
             // Check for custom emoji first
             const lowerName = emojiName.toLowerCase();
-            const { customEmojiMap, emojiMap } = require('./emojis');
             const customEmoji = customEmojiMap[lowerName];
             
             if (customEmoji) {
@@ -365,6 +355,7 @@ export function getSortedPostsData(includeDrafts: boolean = false): BlogPost[] {
   // Get all markdown files recursively
   const markdownFiles = findMarkdownFiles(postsDirectory);
   const allPostsData = markdownFiles
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .map(({fileName, fullPath, relativePath}) => {
       // Create id from relative path without extension
       const id = relativePath.replace(/\.md$/, '').replace(/\\/g, '/');

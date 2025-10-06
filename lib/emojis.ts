@@ -987,6 +987,7 @@ export const emojiMap: Record<string, string> = {
 // Maps emoji names to PNG file paths in /public/images/
 export const customEmojiMap: Record<string, string> = {
   'head-scratch': 'head-scratch.gif',
+  'shakesfist': 'shakesfist.gif',
   // Add more custom emojis here as needed
   // 'custom-name': 'filename.png',
 };

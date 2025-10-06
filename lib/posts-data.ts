@@ -1,12 +1,13 @@
-const fs = require("fs");
-const path = require("path");
-const matter = require("gray-matter");
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import fs from 'fs';
+import path from 'path';
+import matter from 'gray-matter';
 
 const postsDirectory = path.join(process.cwd(), "posts");
 
 // Helper function to recursively find all markdown files
-function findMarkdownFiles(dir, baseDir = dir) {
-  const files = [];
+function findMarkdownFiles(dir: string, baseDir: string = dir): Array<{fileName: string, fullPath: string, relativePath: string}> {
+  const files: Array<{fileName: string, fullPath: string, relativePath: string}> = [];
   const items = fs.readdirSync(dir);
 
   for (const item of items) {
@@ -31,13 +32,14 @@ function findMarkdownFiles(dir, baseDir = dir) {
 /**
  * Get sorted posts data - Node.js compatible version of the TypeScript function
  * This maintains the same logic as getSortedPostsData from markdown.ts
- * @param {boolean} includeDrafts - Whether to include draft posts
- * @returns {Array} Array of blog post objects
+ * @param includeDrafts - Whether to include draft posts
+ * @returns Array of blog post objects
  */
-function getSortedPostsData(includeDrafts = false) {
+function getSortedPostsData(includeDrafts: boolean = false): any[] {
   // Get all markdown files recursively
   const markdownFiles = findMarkdownFiles(postsDirectory);
   const allPostsData = markdownFiles
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .map(({ fileName, fullPath, relativePath }) => {
       // Create id from relative path without extension
       const id = relativePath.replace(/\.md$/, "").replace(/\\/g, "/");
@@ -85,7 +87,7 @@ function getSortedPostsData(includeDrafts = false) {
   });
 }
 
-module.exports = {
+export {
   getSortedPostsData,
   findMarkdownFiles,
 };
