@@ -2,9 +2,21 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://crosscompiled.com/</loc>
-    <lastmod>2025-09-02T03:28:44.536Z</lastmod>
+    <lastmod>2025-10-06T03:47:43.540Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://crosscompiled.com/posts/zergling-project/006-adding-voice-to-text/</loc>
+    <lastmod>2025-10-06T03:15:23.262Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://crosscompiled.com/posts/blog-development/001-adding-a-sitemap/</loc>
+    <lastmod>2025-09-02T17:42:07.435Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/zergling-project/005-detour-autocomplete/</loc>
@@ -14,7 +26,7 @@
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/development-tools/001-investigating-changes-and-planning/</loc>
-    <lastmod>2025-08-30T13:59:16.095Z</lastmod>
+    <lastmod>2025-09-02T17:56:53.408Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

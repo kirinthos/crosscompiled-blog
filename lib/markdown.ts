@@ -127,7 +127,7 @@ function remarkVideo() {
           // Parse additional attributes from alt text if present
           // Format: ![Video description | autoplay | loop | muted | width:800 | height:600](video.mp4)
           if (child.alt) {
-            const parts = child.alt.split('|').map(p => p.trim());
+            const parts = child.alt.split('|').map((p: any) => p.trim());
             videoProps.alt = parts[0] || '';
             
             for (let i = 1; i < parts.length; i++) {
