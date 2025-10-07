@@ -1,5 +1,6 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
+import Image from 'next/image'
 import MermaidInitializer from '../components/MermaidInitializer'
 import VideoInitializer from '../components/VideoInitializer'
 import CategoryNavigation from '../components/CategoryNavigation'
@@ -10,6 +11,19 @@ const inter = Inter({ subsets: ['latin'] })
 export const metadata = {
   title: 'CrossCompiled Blog',
   description: 'A technical blog about software development and engineering',
+  alternates: {
+    types: {
+      'application/rss+xml': [
+        { url: '/rss.xml', title: 'CrossCompiled Blog RSS Feed' }
+      ],
+      'application/atom+xml': [
+        { url: '/atom.xml', title: 'CrossCompiled Blog Atom Feed' }
+      ],
+      'application/json': [
+        { url: '/feed.json', title: 'CrossCompiled Blog JSON Feed' }
+      ]
+    }
+  }
 }
 
 export default function RootLayout({
@@ -59,6 +73,32 @@ export default function RootLayout({
                 
                 {/* Social Links */}
                 <div className="flex items-center space-x-4 mt-1 lg:mr-4">
+                  {/* RSS Feed */}
+                  <a
+                    href="/rss.xml"
+                    className="text-text-secondary hover:text-primary-600 transition-colors duration-200"
+                    title="Subscribe to RSS Feed"
+                  >
+                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M6.503 20.752c0 1.794-1.456 3.248-3.251 3.248-1.796 0-3.252-1.454-3.252-3.248 0-1.794 1.456-3.248 3.252-3.248 1.795.001 3.251 1.454 3.251 3.248zm-6.503-12.572v4.811c6.05.062 10.96 4.966 11.022 11.009h4.817c-.062-8.71-7.118-15.758-15.839-15.82zm0-3.368c10.58.046 19.152 8.594 19.183 19.188h4.817c-.03-13.231-10.755-23.954-24-24v4.812z"/>
+                    </svg>
+                  </a>
+                  
+                  {/* Atom Feed */}
+                  <a
+                    href="/atom.xml"
+                    className="text-text-secondary hover:text-primary-600 transition-colors duration-200"
+                    title="Subscribe to Atom Feed"
+                  >
+                    <Image 
+                      src="/images/atom.feed.svg" 
+                      alt="Atom Feed" 
+                      width={24}
+                      height={24}
+                      className="w-6 h-6"
+                    />
+                  </a>
+                  
                   {/* Email */}
                   <a
                     href="mailto:blog@crosscompiled.com"

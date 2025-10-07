@@ -5,16 +5,18 @@
   "scripts": {
     "dev": "next dev",
     "dev:watch": "node scripts/dev-watch.js",
-    "build": "node scripts/generate-sitemap.js && next build",
+    "build": "node scripts/generate-sitemap.js && node scripts/generate-feeds.js && next build",
     "start": "npx serve@latest out",
-    "export": "node scripts/generate-sitemap.js && next build",
+    "export": "node scripts/generate-sitemap.js && node scripts/generate-feeds.js && next build",
     "lint": "next lint",
     "preview": "npm run build && npx serve@latest out",
     "clear-cache": "node scripts/clear-cache.js",
-    "sitemap": "node scripts/generate-sitemap.js"
+    "sitemap": "node scripts/generate-sitemap.js",
+    "feeds": "node scripts/generate-feeds.js"
   },
   "dependencies": {
     "date-fns": "^2.30.0",
+    "feed": "^5.1.0",
     "gray-matter": "^4.0.3",
     "mermaid": "^11.10.1",
     "next": "^14.0.0",

@@ -2,9 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://crosscompiled.com/</loc>
-    <lastmod>2025-10-06T03:47:43.540Z</lastmod>
+    <lastmod>2025-10-07T02:18:32.342Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://crosscompiled.com/posts/blog-development/002-publishing-feeds/</loc>
+    <lastmod>2025-10-07T02:18:22.111Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/zergling-project/006-adding-voice-to-text/</loc>
