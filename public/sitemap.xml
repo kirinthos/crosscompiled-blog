@@ -2,13 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://crosscompiled.com/</loc>
-    <lastmod>2025-10-07T02:18:32.342Z</lastmod>
+    <lastmod>2025-10-07T02:25:11.404Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/blog-development/002-publishing-feeds/</loc>
-    <lastmod>2025-10-07T02:18:22.111Z</lastmod>
+    <lastmod>2025-10-07T02:24:20.090Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

@@ -209,3 +209,36 @@ readers...I guess the only option I have now is to publish this page and check
 it in gfeeds, too. Maybe these modern readers can render them in a webview or
 something so at least they'll look okay...How is this going to affect my
 substack posts!?
+
+![Atom feed not looking so good](/images/atom.feed.broken.png)
+
+How about RSS?
+
+![RSS feed not looking so good](/images/rss.feed.broken.png)
+
+Let's add it to chat...
+
+> [!prompt] hey, uh...there's something wrong with the published feeds that
+> don't seem to have an issue when I loaded the feeds locally XML Parsing Error:
+> mismatched tag. Expected: </content:encoded>. Location:
+> https://blog.crosscompiled.com/rss.xml Line Number 121, Column 124:
+
+Oh, and I couldn't include the following because I can't render html tags in
+callouts (yet).
+
+```html
+<description
+  ><![CDATA[Let's add a feed/subscription so interested users know when we
+  publish new articles!]]></description
+>
+```
+
+AND GUESS WHAT THE BUG WAS
+
+> [!robot] The Problem: Your blog post content contained XML code examples with
+> ]]> sequences, which were breaking the CDATA sections in the RSS feed and
+> causing XML parsing errors. The Solution: I modified the feed generation
+> script to escape ]]> sequences as ]]&gt; before adding content to the feed,
+> preventing CDATA section corruption.
+
+Hilarious. Let's push these changes.

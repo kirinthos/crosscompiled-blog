@@ -67,12 +67,17 @@ async function generateFeeds() {
         }
       }
 
+      // Escape content to prevent CDATA issues with ]]> sequences
+      const safeContent = post.content
+        ? post.content.replace(/]]>/g, "]]&gt;")
+        : "";
+
       feed.addItem({
         title: post.title,
         id: postUrl,
         link: postUrl,
         description: description || `Read more about ${post.title}`,
-        content: post.content,
+        content: safeContent,
         author: [
           {
             name: post.author || authorName,
