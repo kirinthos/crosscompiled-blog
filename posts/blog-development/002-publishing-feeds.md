@@ -241,4 +241,10 @@ AND GUESS WHAT THE BUG WAS
 > script to escape ]]> sequences as ]]&gt; before adding content to the feed,
 > preventing CDATA section corruption.
 
-Hilarious. Let's push these changes.
+Hilarious. Let's push these changes. Newsboat seems to render them okay.
+
+![It's working! It's working!](/images/gfeeds.atom.feed.png)
+
+Oh, fuck yeah. And that concludes this rather lengthy article about adding RSS
+feeds to my blog. Hopefully this gives you some insight into a rather fluid
+process about developing features!
