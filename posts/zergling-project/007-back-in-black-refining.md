@@ -7,7 +7,6 @@ excerpt:
   Now let's look at refining the Zergling UI and begin talking about our first
   integration with MCP and tools!"
 tags: ["ai", "llms", "external services", "mcp", "planning"]
-draft: true
 ---
 
 # Fixing the UI
@@ -98,3 +97,9 @@ platform _should_ be able to use it. You may have to do some tinkering depending
 on what system and with what libraries you have available to you. Otherwise, I
 will try to choose relatively system-agnostic languages and we will even develop
 a web UI!
+
+# Message from the future
+
+It's now 2026-01-30 and I'm writing in this old article. I forgot to publish it.
+This was supposed to be a brief fix of a UI issue and then I got completely
+distracted. See more details in my next post 009!
