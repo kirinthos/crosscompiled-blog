@@ -110,6 +110,23 @@ export default function RootLayout({
                     </svg>
                   </a>
                   
+                  {/* Patreon - official symbol from https://www.patreon.com/brand */}
+                  <a
+                    href="https://www.patreon.com/CrossCompiled"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-text-secondary hover:text-primary-600 transition-colors duration-200"
+                    title="Support on Patreon"
+                  >
+                    <Image
+                      src="/images/patreon.png"
+                      alt="Patreon"
+                      width={24}
+                      height={24}
+                      className="w-6 h-6 object-contain"
+                    />
+                  </a>
+                  
                   {/* Twitter/X - Commented out for now */}
                   {/* <a
                     href="https://x.com/CrossCompiled"
