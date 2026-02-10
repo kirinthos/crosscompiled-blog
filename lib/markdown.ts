@@ -20,11 +20,103 @@ import { convertEmojis, customEmojiMap, emojiMap } from './emojis';
 
 const postsDirectory = path.join(process.cwd(), 'posts');
 
+function renderInlineToHtml(nodes: any[]): string {
+  return (nodes || []).map((c: any) => {
+    if (c.type === 'text') {
+      let text = (c.value || '')
+        .replace(/\n\n+/g, '<br><br>')
+        .replace(/\n/g, ' ');
+      text = text
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+      return text;
+    }
+    if (c.type === 'strong') {
+      return `<strong>${(c.children || []).map((sc: any) => sc.value || '').join('')}</strong>`;
+    }
+    if (c.type === 'emphasis') {
+      return `<em>${(c.children || []).map((sc: any) => sc.value || '').join('')}</em>`;
+    }
+    if (c.type === 'inlineCode') {
+      return `<code>${c.value || ''}</code>`;
+    }
+    if (c.type === 'link') {
+      const linkText = (c.children || []).map((sc: any) => sc.value || '').join('');
+      return `<a href="${c.url}">${linkText}</a>`;
+    }
+    return c.value || '';
+  }).join('');
+}
+
+function renderListToHtml(listNode: any): string {
+  const tag = listNode.ordered ? 'ol' : 'ul';
+  const items = (listNode.children || []).map((li: any) => {
+    const blocks = li.children || [];
+    const parts = blocks.map((block: any) => {
+      if (block.type === 'paragraph') {
+        const html = renderInlineToHtml(block.children || []);
+        return { html, type: 'paragraph' as const };
+      }
+      if (block.type === 'list') {
+        return { html: renderListToHtml(block), type: 'list' as const };
+      }
+      return { html: '', type: 'other' as const };
+    }).filter((p: { html: string }) => p.html);
+    const wrapInP = blocks.length > 1 || blocks.some((b: any) => b.type === 'list');
+    const content = parts.map(({ html, type }) =>
+      wrapInP && type === 'paragraph' ? `<p>${html}</p>` : html
+    ).join('');
+    return `<li>${content}</li>`;
+  }).join('');
+  return `<${tag}>${items}</${tag}>`;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderBlockChildToHtml(child: any): { html: string; block: boolean } | null {
+  if (child.type === 'paragraph') {
+    return { html: renderInlineToHtml(child.children || []), block: false };
+  }
+  if (child.type === 'list') {
+    return { html: renderListToHtml(child), block: true };
+  }
+  if (child.type === 'thematicBreak') {
+    return { html: '<hr>', block: true };
+  }
+  if (child.type === 'code') {
+    const langClass = child.lang ? `language-${child.lang}` : 'language-plaintext';
+    return { html: `<pre><code class="${langClass}">${escapeHtml(child.value || '')}</code></pre>`, block: true };
+  }
+  if (child.type === 'heading') {
+    const depth = Math.min(6, Math.max(1, child.depth ?? 2));
+    const tag = `h${depth}`;
+    return { html: `<${tag}>${renderInlineToHtml(child.children || [])}</${tag}>`, block: true };
+  }
+  return null;
+}
+
+function joinBlockParts(parts: { html: string; block: boolean }[]): string {
+  return parts
+    .map((p, i) => {
+      const next = parts[i + 1];
+      const needBreak = next && !p.block && !next.block;
+      return p.html + (needBreak ? '<br><br>' : '');
+    })
+    .join('');
+}
+
 // Custom remark plugin to handle callout syntax
 function remarkCallouts() {
   return (tree: any) => {
     visit(tree, 'blockquote', (node: any) => {
-      // Look for blockquotes that start with a callout indicator
       const firstChild = node.children?.[0];
       if (firstChild?.type === 'paragraph') {
         const firstText = firstChild.children?.[0];
@@ -32,63 +124,50 @@ function remarkCallouts() {
           const calloutMatch = firstText.value.match(/^\[!(info|warning|danger|thought|success|error|note|tip|prompt|robot)\]\s*/i);
           if (calloutMatch) {
             const calloutType = calloutMatch[1].toLowerCase();
-            
-            // Remove the callout indicator from the text
             firstText.value = firstText.value.replace(calloutMatch[0], '');
-            
-            // Transform the blockquote into a div with callout classes
+
             node.type = 'html';
             node.value = `<div class="callout ${calloutType}">`;
-            
-            // Process the content with proper markdown line break handling and inline formatting
-            const content = node.children.map((child: any) => {
-              if (child.type === 'paragraph') {
-                return child.children.map((c: any) => {
-                  if (c.type === 'text') {
-                    // Handle markdown-style line breaks: only double newlines create breaks
-                    // Single newlines (from editor wrapping) are treated as spaces
-                    let text = (c.value || '')
-                      .replace(/\n\n+/g, '<br><br>') // Double+ newlines become paragraph breaks
-                      .replace(/\n/g, ' '); // Single newlines become spaces
-                    
-                    // Process inline markdown formatting
-                    text = text
-                      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') // Bold
-                      .replace(/\*([^*]+)\*/g, '<em>$1</em>') // Italic
-                      .replace(/`([^`]+)`/g, '<code>$1</code>') // Inline code
-                      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>'); // Links
-                    
-                    return text;
-                  }
-                  if (c.type === 'strong') {
-                    return `<strong>${c.children.map((sc: any) => sc.value || '').join('')}</strong>`;
-                  }
-                  if (c.type === 'emphasis') {
-                    return `<em>${c.children.map((sc: any) => sc.value || '').join('')}</em>`;
-                  }
-                  if (c.type === 'inlineCode') {
-                    return `<code>${c.value || ''}</code>`;
-                  }
-                  if (c.type === 'link') {
-                    const linkText = c.children.map((sc: any) => sc.value || '').join('');
-                    return `<a href="${c.url}">${linkText}</a>`;
-                  }
-                  return c.value || '';
-                }).join('');
-              }
-              return '';
-            }).join('<br><br>');
-            
-            // Clean up the content and convert emojis
+
+            const contentParts = node.children
+              .map((child: any) => renderBlockChildToHtml(child))
+              .filter((p): p is { html: string; block: boolean } => p != null);
+
+            const content = joinBlockParts(contentParts);
             const cleanContent = content.replace(/^\s+|\s+$/g, '');
             const contentWithEmojis = convertEmojis(cleanContent);
             node.value += contentWithEmojis + '</div>';
-            
-            // Remove children since we've converted to HTML
             delete node.children;
           }
         }
       }
+    });
+  };
+}
+
+// Custom remark plugin for collapsible sections: first line "?? Summary" or "??? Summary" (open by default)
+function remarkCollapse() {
+  return (tree: any) => {
+    visit(tree, 'blockquote', (node: any) => {
+      const firstChild = node.children?.[0];
+      if (firstChild?.type !== 'paragraph') return;
+      const firstText = firstChild.children?.[0];
+      if (firstText?.type !== 'text' || !firstText.value) return;
+      const match = firstText.value.match(/^\?\?\?\s+(.+)$/) ?? firstText.value.match(/^\?\?\s+(.+)$/);
+      if (!match) return;
+      const summary = match[1].trim();
+      const openByDefault = firstText.value.startsWith('???');
+      const rest = node.children.slice(1);
+      const contentParts = rest
+        .map((child: any) => renderBlockChildToHtml(child))
+        .filter((p): p is { html: string; block: boolean } => p != null);
+      const bodyHtml = contentParts.length
+        ? `<div class="collapse-content">${convertEmojis(joinBlockParts(contentParts))}</div>`
+        : '';
+      const openAttr = openByDefault ? ' open' : '';
+      node.type = 'html';
+      node.value = `<details class="collapse"${openAttr}><summary class="collapse-summary">${convertEmojis(renderInlineToHtml(firstChild.children || []).replace(/^\?\?\s+|\?\?\?\s+/g, '').trim())}</summary>${bodyHtml}</details>`;
+      delete node.children;
     });
   };
 }
@@ -446,20 +525,21 @@ export async function getPostData(id: string): Promise<BlogPost> {
   const processedContent = await remark()
     .use(gfm) // GitHub Flavored Markdown support
     .use(remarkCallouts) // Custom callout boxes
+    .use(remarkCollapse) // Collapsible details/summary
     .use(remarkMermaid) // Custom Mermaid diagram handling
     .use(remarkVideo) // Custom video embed handling
     .use(remarkEmojis) // Custom emoji conversion
     .use(remarkMath) // Math notation support
     .use(remarkRehype, { allowDangerousHtml: true }) // Convert remark AST to rehype AST
-    // After remarkRehype, we've converted the markdown AST into the html AST
-    // so we'll apply the rehype plugins now
+    // Parse raw HTML (callouts, collapse, mermaid) so later plugins can process inner nodes
+    .use(rehypeRaw)
     .use(rehypeKatex) // Math rendering (dynamically loaded)
     .use(rehypeHighlight, {
       // Configure supported languages
       languages: {
         ...common,
       }
-    }) // Syntax highlighting for code blocks
+    }) // Syntax highlighting for code blocks (including those inside callouts/collapse)
     .use(rehypeSlug) // Add IDs to headings
     .use(rehypeAutolinkHeadings, {
       // Add clickable links to headings
@@ -468,7 +548,6 @@ export async function getPostData(id: string): Promise<BlogPost> {
         className: ['heading-link']
       }
     })
-    .use(rehypeRaw)
     .use(rehypeStringify) // Convert rehype AST to HTML string
     .process(matterResult.content);
   

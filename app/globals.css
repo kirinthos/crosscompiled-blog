@@ -224,6 +224,64 @@ pre:hover .copy-button {
   max-width: none !important;
 }
 
+/* Collapsible details/summary */
+.prose .collapse {
+  @apply my-4 rounded-lg border border-gray-200 bg-gray-50;
+}
+
+.prose .collapse-summary {
+  @apply cursor-pointer list-none py-3 px-4 font-medium text-gray-800;
+}
+
+.prose .collapse-summary::-webkit-details-marker {
+  display: none;
+}
+
+.prose .collapse-summary::before {
+  content: '▶';
+  @apply mr-2 inline-block text-gray-500 transition-transform;
+}
+
+.prose .collapse[open] .collapse-summary::before {
+  transform: rotate(90deg);
+}
+
+.prose .collapse-content {
+  @apply border-t border-gray-200 px-4 py-3 text-gray-700;
+}
+
+.prose .collapse-content p {
+  @apply my-0;
+}
+
+.prose .callout h1,
+.prose .callout h2,
+.prose .callout h3,
+.prose .callout h4,
+.prose .callout h5,
+.prose .callout h6,
+.prose .collapse-content h1,
+.prose .collapse-content h2,
+.prose .collapse-content h3,
+.prose .collapse-content h4,
+.prose .collapse-content h5,
+.prose .collapse-content h6 {
+  @apply font-semibold text-gray-900 mt-3 mb-1;
+}
+
+.prose .callout h1:first-child,
+.prose .collapse-content h1:first-child { @apply mt-0; }
+.prose .callout h2:first-child,
+.prose .collapse-content h2:first-child { @apply mt-0; }
+.prose .callout h3:first-child,
+.prose .collapse-content h3:first-child { @apply mt-0; }
+.prose .callout h4:first-child,
+.prose .collapse-content h4:first-child { @apply mt-0; }
+.prose .callout h5:first-child,
+.prose .collapse-content h5:first-child { @apply mt-0; }
+.prose .callout h6:first-child,
+.prose .collapse-content h6:first-child { @apply mt-0; }
+
 /* Enhanced Callout boxes with icons */
 .prose .callout {
   @apply p-4 rounded-lg border-l-4 my-6 relative pl-12;
@@ -419,6 +477,17 @@ pre:hover .copy-button {
 
 /* Code blocks within callouts should maintain syntax highlighting */
 .prose .callout code {
+  @apply bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaco', 'Consolas', monospace;
+}
+
+.prose .callout pre,
+.prose .collapse-content pre {
+  @apply my-3;
+}
+
+/* Inline code inside collapse (same as callout) */
+.prose .collapse-content code {
   @apply bg-gray-200 text-gray-800 px-1 py-0.5 rounded text-sm;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Monaco', 'Consolas', monospace;
 }
