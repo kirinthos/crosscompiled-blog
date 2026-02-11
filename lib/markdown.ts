@@ -65,7 +65,7 @@ function renderListToHtml(listNode: any): string {
       return { html: '', type: 'other' as const };
     }).filter((p: { html: string }) => p.html);
     const wrapInP = blocks.length > 1 || blocks.some((b: any) => b.type === 'list');
-    const content = parts.map(({ html, type }) =>
+    const content = parts.map(({ html, type }: { html: string; type: string }) =>
       wrapInP && type === 'paragraph' ? `<p>${html}</p>` : html
     ).join('');
     return `<li>${content}</li>`;
@@ -103,12 +103,13 @@ function renderBlockChildToHtml(child: any): { html: string; block: boolean } | 
   return null;
 }
 
-function joinBlockParts(parts: { html: string; block: boolean }[]): string {
+function joinBlockParts(parts: { html: string; block: boolean }[] | null | undefined): string {
+  if (!parts || !Array.isArray(parts)) return '';
   return parts
     .map((p, i) => {
       const next = parts[i + 1];
       const needBreak = next && !p.block && !next.block;
-      return p.html + (needBreak ? '<br><br>' : '');
+      return (p?.html ?? '') + (needBreak ? '<br><br>' : '');
     })
     .join('');
 }
@@ -131,13 +132,13 @@ function remarkCallouts() {
 
             const contentParts = node.children
               .map((child: any) => renderBlockChildToHtml(child))
-              .filter((p): p is { html: string; block: boolean } => p != null);
+              .filter((p: { html: string; block: boolean } | null): p is { html: string; block: boolean } => p != null);
 
             const content = joinBlockParts(contentParts);
             const cleanContent = content.replace(/^\s+|\s+$/g, '');
             const contentWithEmojis = convertEmojis(cleanContent);
             node.value += contentWithEmojis + '</div>';
-            delete node.children;
+            node.children = [];
           }
         }
       }
@@ -159,14 +160,14 @@ function remarkCollapse() {
       const rest = node.children.slice(1);
       const contentParts = rest
         .map((child: any) => renderBlockChildToHtml(child))
-        .filter((p): p is { html: string; block: boolean } => p != null);
+        .filter((p: { html: string; block: boolean } | null): p is { html: string; block: boolean } => p != null);
       const bodyHtml = contentParts.length
         ? `<div class="collapse-content">${convertEmojis(joinBlockParts(contentParts))}</div>`
         : '';
       const openAttr = openByDefault ? ' open' : '';
       node.type = 'html';
       node.value = `<details class="collapse"${openAttr}><summary class="collapse-summary">${convertEmojis(renderInlineToHtml(firstChild.children || []).replace(/^\?\?\s+|\?\?\?\s+/g, '').trim())}</summary>${bodyHtml}</details>`;
-      delete node.children;
+      node.children = [];
     });
   };
 }

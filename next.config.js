@@ -5,6 +5,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // Next.js 16 uses Turbopack by default; empty config acknowledges we have webpack config for dev
+  turbopack: {},
   // Remove basePath and assetPrefix for direct S3 hosting
   // Add them back if you need to host in a subdirectory
 
