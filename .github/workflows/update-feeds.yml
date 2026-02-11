@@ -1,0 +1,45 @@
+name: Regenerate feeds and sitemap
+
+# Runs when post content or feed/sitemap logic changes; regenerates public feeds and sitemap and commits.
+# Also run manually via Actions tab → "Regenerate feeds and sitemap" → Run workflow.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'posts/**'
+      - 'lib/posts-data.js'
+      - 'lib/markdown.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-feeds:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate feeds and sitemap
+        run: |
+          npm run sitemap
+          npm run feeds
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/rss.xml public/atom.xml public/feed.json public/sitemap.xml
+          git diff --staged --quiet || (git commit -m "chore: regenerate feeds and sitemap" && git push)

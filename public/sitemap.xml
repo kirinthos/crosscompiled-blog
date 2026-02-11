@@ -2,61 +2,103 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://crosscompiled.com/</loc>
-    <lastmod>2025-10-07T02:25:11.404Z</lastmod>
+    <lastmod>2026-02-11T02:49:51.027Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://crosscompiled.com/posts/zergling-project/012-model-agnosticism/</loc>
+    <lastmod>2026-02-10T04:59:53.460Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://crosscompiled.com/posts/zergling-project/011-ai-agent-service/</loc>
+    <lastmod>2026-02-07T05:06:36.965Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://crosscompiled.com/posts/zergling-project/010-agent-service/</loc>
+    <lastmod>2026-02-07T04:57:14.028Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://crosscompiled.com/posts/zergling-project/009-the-new-architecture/</loc>
+    <lastmod>2026-02-01T02:45:58.759Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://crosscompiled.com/posts/blog-development/003-patreon/</loc>
+    <lastmod>2026-02-01T03:15:06.270Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://crosscompiled.com/posts/zergling-project/008-the-new-year-goals/</loc>
+    <lastmod>2026-01-31T02:56:41.118Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://crosscompiled.com/posts/blog-development/002-publishing-feeds/</loc>
-    <lastmod>2025-10-07T02:24:20.090Z</lastmod>
+    <lastmod>2026-01-30T01:53:16.814Z</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://crosscompiled.com/posts/zergling-project/007-back-in-black-refining/</loc>
+    <lastmod>2026-01-31T02:31:38.564Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/zergling-project/006-adding-voice-to-text/</loc>
-    <lastmod>2025-10-06T03:15:23.262Z</lastmod>
+    <lastmod>2026-01-30T01:53:16.815Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/blog-development/001-adding-a-sitemap/</loc>
-    <lastmod>2025-09-02T17:42:07.435Z</lastmod>
+    <lastmod>2026-01-30T01:53:16.814Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/zergling-project/005-detour-autocomplete/</loc>
-    <lastmod>2025-08-29T12:26:06.620Z</lastmod>
+    <lastmod>2026-01-30T01:53:16.815Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/development-tools/001-investigating-changes-and-planning/</loc>
-    <lastmod>2025-09-02T17:56:53.408Z</lastmod>
+    <lastmod>2026-01-30T01:53:16.814Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/zergling-project/004-building-the-zergling-extension/</loc>
-    <lastmod>2025-08-27T03:22:07.281Z</lastmod>
+    <lastmod>2026-01-30T01:53:16.815Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/zergling-project/003-the-first-story-zergling/</loc>
-    <lastmod>2025-08-27T02:56:27.574Z</lastmod>
+    <lastmod>2026-01-30T01:53:16.815Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/zergling-project/002-ai-a-new-frontier/</loc>
-    <lastmod>2025-08-27T02:42:57.044Z</lastmod>
+    <lastmod>2026-01-30T01:53:16.815Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://crosscompiled.com/posts/zergling-project/001-a-new-frontier/</loc>
-    <lastmod>2025-08-27T02:50:22.266Z</lastmod>
+    <lastmod>2026-01-30T01:53:16.815Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

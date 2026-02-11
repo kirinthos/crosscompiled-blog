@@ -4,7 +4,7 @@
         <title>CrossCompiled Blog</title>
         <link>https://blog.crosscompiled.com</link>
         <description>A blog about software development, AI, and technology</description>
-        <lastBuildDate>Mon, 06 Oct 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Mon, 09 Feb 2026 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>CrossCompiled Blog Feed Generator</generator>
         <language>en</language>
@@ -13,8 +13,1728 @@
             <url>https://blog.crosscompiled.com/images/logo.png</url>
             <link>https://blog.crosscompiled.com</link>
         </image>
-        <copyright>All rights reserved 2025, Jay</copyright>
+        <copyright>All rights reserved 2026, Jay</copyright>
         <atom:link href="https://blog.crosscompiled.com/rss.xml" rel="self" type="application/rss+xml"/>
+        <item>
+            <title><![CDATA[Model Agnosticism and Local LLMs]]></title>
+            <link>https://blog.crosscompiled.com/posts/zergling-project/012-model-agnosticism/</link>
+            <guid isPermaLink="false">https://blog.crosscompiled.com/posts/zergling-project/012-model-agnosticism/</guid>
+            <pubDate>Mon, 09 Feb 2026 00:00:00 GMT</pubDate>
+            <description><![CDATA[Introduce model agnosticism into our agent-server and load up some local models!]]></description>
+            <content:encoded><![CDATA[
+# Picking Up Where We Left Off
+
+Oooh, title case, gotta love it.
+
+What were we doing last time? Let's just ask:
+
+> [!prompt] what were we doing in our last commit and what do you think our next
+> step should be if we want to introduce an abstraction on model vendor choice?
+
+While it examines what we've done, I want to ask an interesting thing of the
+model. I want it to document what we have constructed inside of a markdown file.
+I want this file to describe our modules and implementation choices, interfaces,
+utilities, libraries, all of the goodies. With this over-arching description of
+our project, I can begin to manipulate the context of the model and point it to
+subsections of the project to work on. This will be very powerful (I suspect)
+for our current goal of running LOCAL LLMS! :moneybag:
+
+Let's look at that prompt.
+
+> [!prompt] I would like you to build a document hierarchy. Create a new
+> top-level directory called architcture/ and in this directory I would like you
+> to write markdown files describing our entire codebase. These documents should
+> be relatively concise, describing only what they need to and when more
+> detailed information is needed, link out to another markdown document. As an
+> example, we have four main projects so far: zergling-extension,
+> zergling-agent-server, zergling-web-ui, and zergling-voice2text. Let's order
+> this folder hierarchically as well, with each directory containing a
+> CONTENTS.md file. The CONTENTS.md file will be a brief description of the
+> current level of the hierarchy and act as a table of contents for the sibling
+> markdown files in the same directory. This means there will be four folders,
+> one for each project, each containing a CONTENTS.md. As an example of what
+> these directories contain, take zergling-agent-server: there should be a
+> document describing the web server and the api and another document describing
+> the mcp server and integrated tools. As you scan each project and compose this
+> document hierarchy, group related information in the same document. Once you
+> are done, generate a RULES.md file in the root of the repository that
+> describes the rules for reading and modifying these documents.
+
+WOOF! What a mouthful. Let's see if this works. This agent will churn in the
+background while we get back to work. This, to me, is some of the most power to
+gain from agents. I love modularity and I aim to instruct our agents to maintain
+my love with the ulterior goal of having discrete modules that encapsulate
+work...much like the paradigm itself! We know that if we have some module that
+loads files and that module has a public interface and is sound and well tested
+that we don't need to think about what that module does, only _what it provides
+for us!_ We're going to exploit this to the optimus!
+
+> [!robot] What the last commit did
+>
+> The last commit introduced the Zergling agent server, REPL, and web UI, and
+> then added MCP tool support across all of them.
+>
+> - Agent server (zergling-agent-server)
+>   - FastAPI app that proxies chat to the Anthropic Messages API.
+>   - POST /chat: forwards messages (and optional system/tools) to Anthropic;
+>     supports tool-use loop (up to 10 rounds).
+>   - GET /config, GET /health, GET /tools (from MCP), GET /models
+>     (vendor-keyed: anthropic from Anthropic’s API, openai as a placeholder).
+>     API key from env or x-zergling-api-key; model/endpoint from headers.
+>   - MCP app mounted at /mcp; tools (e.g. list_directory) are converted to
+>     Anthropic tool format and executed in the loop.
+> - REPL
+>   - Adds /tool (list/set/clear tools), sends tool_names in chat when set,
+>     shows active tools in the banner.
+> - Web UI
+>   - Tools row and expandable tools panel; activeToolNames in settings and sent
+>     with chat.
+>
+> So the current state is: one backend (Anthropic only) for both listing models
+> and performing chat; OpenAI is only a placeholder in the /models response.
+
+> [!note] Ah, shit. Bullets don't render in callouts. I wonder if the blog agent
+> can fix that while I keep working... [prompt: I can't put bullets in my > > >
+>
+> > callouts, could you fix this for me?]
+
+Also, we're making use of AGENTS.md. Because I want to be model agnostic, I
+don't want to use specifically cursor rules. We're going to have our local
+agents obey AGENTS.md as well! Here's all I'm putting in there right now:
+
+```markdown
+# Role
+
+You are an expert programmer. You write concise code and use modularity to
+maintain a clean and simple codebase.
+
+# Always
+
+- See architecture/CONTENTS.md for documentation on the project.
+  - Observe RULES.md when modifying architecture documentation
+- Prefer unit tests. Do not create new files for one off testing. Write test
+  suites.
+- Run python in a virtualenv
+```
+
+Start simple. Add as needed. We'll refine this over time and I will point out
+whenever I do. Back to the next step, model modularity. Here's the paraphrased
+output of "what we should do next" from the AI point of view.
+
+> [!robot]
+>
+> - Define a small provider interface (e.g. in zergling-agent-server/):
+> - Implement an Anthropic provider that wraps the current logic:
+> - Route by model (or vendor) in the API layer:
+> - Keep tool handling vendor-aware
+
+Hmm, not bad. I'm going to ask it to write a plan for this, but to include in
+this plan developing an abstract class for vendors, or potentially models? -- so
+we can add new models as we use them. Let's get started.
+
+> [!prompt] Great idea. Develop a plan on the changes we plan to make. Consider
+> using an abstract class to create a model agnostic interface. We know we'll
+> want to chat with the models, and we know we'll need tools, be sure to include
+> these features.
+
+Have to give the guy some encouragement, he's doing a great job. While this
+thing churns I'll say that GPT-5 is great for this planning feature. I'm
+thinking that when we get our local model swarm off the ground, we may use a
+very "intelligent" model to do our planning and have it compose documents or
+tickets of what needs to be done, then pass that to an orchestrator who spins up
+implementing agents. I'll get a diagram for this as we get closer.
+
+The plan is solid. I want to find a way to start including these plans in the
+blog posts in an expanding output or something so that you can read what I'm
+generating and have context when I make suggestions to the agent about the plan.
+Let me see if this blog agent can figure that out.............Alright, here's
+the plan after some back and forth while this collapsible section was built in
+the blog.
+
+> ?? Model Vendor Abstraction Plan
+>
+> ---
+>
+> name: Model vendor abstraction overview: Introduce an abstract ModelProvider
+> base class in the agent server that defines a vendor-agnostic interface for
+> listing models and performing chat (including tool-use rounds). Move the
+> existing Anthropic logic behind an AnthropicProvider implementation and route
+> requests in main.py via the abstraction. todos:
+>
+> - id: base-interface content: Add providers/base.py with ABC, result types,
+>   registry, get_provider_for_model status: completed
+> - id: anthropic-provider content: Implement AnthropicProvider (list_models
+>   from API, chat, to_tools) status: completed
+> - id: main-refactor content: Refactor main.py to use providers for /models and
+>   /chat; no static model lists status: completed
+> - id: openai-provider content: Implement OpenAIProvider (list_models from
+>   OpenAI API, chat with tool_calls, to_tools); register and route gpt-\*
+>   status: in_progress isProject: false
+>
+> ---
+>
+> # Model vendor abstraction plan
+>
+> ## Goal
+>
+> Support multiple model vendors (Anthropic now, OpenAI later) behind a single
+> API by defining a model-agnostic interface and moving Anthropic behind it.
+> Chat and tools are first-class: the interface includes listing models, sending
+> chat with optional tools, and handling tool-use rounds.
+>
+> ## Current state
+>
+> - [main.py](zergling-agent-server/main.py): All vendor logic is
+>   inline—Anthropic Messages API for GET /models (lines 124–188) and POST /chat
+>   (lines 219–307), including the tool-use loop and MCP tool execution.
+> - Tools: MCP exposes tools as `{name, description, input_schema}`; Anthropic
+>   uses the same shape. The server converts by name, runs tools via
+>   `mcp.get_tools()` and `tool.run(input)`, and appends tool_result blocks to
+>   messages.
+>
+> ## Architecture
+>
+> ```mermaid
+> flowchart LR
+>     subgraph api [HTTP API]
+>         GET_models[GET /models]
+>         POST_chat[POST /chat]
+>     end
+>     subgraph routing [Routing]
+>         resolve[Resolve provider by model]
+>     end
+>     subgraph providers [Providers]
+>         ABC[ModelProvider ABC]
+>         Anthropic[AnthropicProvider]
+>         OpenAI[OpenAIProvider]
+>         ABC --> Anthropic
+>         ABC --> OpenAI
+>     end
+>     subgraph mcp [MCP]
+>         get_tools[get_tools_for_api]
+>         run_tool[tool.run]
+>     end
+>     GET_models --> resolve
+>     POST_chat --> resolve
+>     resolve --> Anthropic
+>     Anthropic --> get_tools
+>     POST_chat --> run_tool
+> ```
+>
+> - **One round per provider**: Each provider implements a single chat round
+>   (request → response). The server owns the tool loop: it calls the provider;
+>   if the response is tool_use, it runs MCP tools, appends results to messages,
+>   and calls the provider again (up to N rounds).
+> - **Canonical tools**: MCP gives a canonical list
+>   `[{name, description, input_schema}]`. Each provider converts that to its
+>   own API format and parses tool_use from its response into a normalized shape
+>   so the server can execute by name and feed back.
+>
+> ## 1. Abstract interface and types
+>
+> **New module**: `zergling-agent-server/providers/base.py` (or a single
+> `providers.py` if preferred).
+>
+> - **Result types** (vendor-agnostic):
+>   - `ListModelsResult`: `models: list[dict]` (each with at least `id`;
+>     optional `display_name`, `created_at`, `type`), optional `error: str`,
+>     optional pagination fields (`has_more`, `first_id`, `last_id`).
+>   - `ChatRoundResult`: either final text or tool uses—e.g. a small dataclass
+>     or TypedDict with `content: str | None` and
+>     `tool_uses: list[ToolUse] | None` where one is set; `ToolUse` has `id`,
+>     `name`, `input: dict`.
+> - **Abstract base class** `ModelProvider` (use `abc.ABC` and
+>   `@abstractmethod`):
+>   - `vendor_id: str` — e.g. `"anthropic"` (class or instance attribute).
+>   - `list_models(self, api_key: str | None) -> ListModelsResult` — async;
+>     fetches model list for this vendor (or returns error if key
+>     missing/invalid).
+>   - `chat(self, messages: list[dict], model: str, system: str, max_tokens: int, tools: list[dict] | None) -> ChatRoundResult`
+>     — async; one round. `tools` are in **vendor-specific format** (provider
+>     converts from canonical internally or receives already converted; see
+>     below).
+>   - `to_tools(self, canonical_tools: list[dict]) -> list[dict]` — convert from
+>     MCP/canonical `{name, description, input_schema}` to the format this
+>     vendor’s API expects. For Anthropic the canonical shape is already
+>     compatible; for OpenAI this would map to function-calling format.
+>
+> So the server will: get canonical tools from MCP; call
+> `provider.to_tools(canonical)`; in a loop call
+> `provider.chat(messages, model, system, max_tokens, tools)`; if result has
+> `content`, return it; else for each `tool_use` run MCP by name, append
+> assistant + user tool_result messages, repeat.
+>
+> ## 2. Anthropic provider
+>
+> **New module**: `zergling-agent-server/providers/anthropic.py`.
+>
+> - Implement `ModelProvider`: `vendor_id = "anthropic"`.
+> - **list_models**: Move the existing GET logic from
+>   [main.py](zergling-agent-server/main.py) (lines 131–186) into this
+>   method—httpx to `ANTHROPIC_MODELS_URL` with pagination, return
+>   `ListModelsResult` with `models` (and optional `error`, `has_more`, etc.).
+> - **to_tools**: Accept canonical list; return as-is (Anthropic format matches)
+>   or ensure `input_schema` has `type: "object"`; same as current
+>   `_anthropic_tools_from_names` but keyed by the canonical list, not by names
+>   filter.
+> - **chat**: Accept `messages`, `model`, `system`, `max_tokens`, `tools`. Build
+>   request, POST to `DEFAULT_ENDPOINT` (or configurable), use
+>   `anthropic-version` and `x-api-key`. Parse response:
+>   - If `stop_reason == "end_turn"`: return `ChatRoundResult(content=text)`.
+>   - If `stop_reason == "tool_use"`: extract `tool_use` blocks to
+>     `ToolUse(id, name, input)` and return `ChatRoundResult(tool_uses=[...])`.
+>   - Otherwise raise or return an error result.
+>
+> Dependencies (httpx) stay in the provider; no need to change
+> [requirements.txt](zergling-agent-server/requirements.txt) if httpx is already
+> there.
+>
+> ## 3. Provider registry and routing
+>
+> - **Registry**: In `base.py` or a small `providers/registry.py`, maintain a
+>   mapping `vendor_id -> ModelProvider` instance. Register provider instances
+>   at import/startup only—**no static model lists**. The registry holds only
+>   the code that knows how to talk to each vendor; model lists are always
+>   loaded live from the vendor API when GET /models is called. For each
+>   registered provider, GET /models calls `provider.list_models(api_key)`,
+>   which performs an HTTP request to that vendor’s models API (e.g. Anthropic
+>   GET /v1/models, OpenAI GET /v1/models) and returns the result. Do not cache
+>   or store model lists in the registry or in config.
+> - **Resolve provider from model**: Add a function
+>   `get_provider_for_model(model_id: str) -> ModelProvider`. Use model-id
+>   prefix (e.g. `claude-` for Anthropic, `gpt-` for OpenAI) to return the
+>   correct provider; unknown prefixes return None. Optionally support an
+>   explicit `x-zergling-vendor` header later; for this step prefix-based is
+>   enough so the REPL and web UI need no change.
+>
+> ## 4. Changes in main.py
+>
+> - **Imports**: Import the abstract types, `get_provider_for_model`, and the
+>   registry (so Anthropic is registered).
+> - **GET /models**: Build result dict by iterating registered providers (or by
+>   vendor keys you want to expose). For each, call
+>   `provider.list_models(api_key)` and map `provider.vendor_id` →
+>   `ListModelsResult` serialized to the current JSON shape (`models`, `error`,
+>   `has_more`, etc.). Keep the same response shape so the UI and REPL remain
+>   compatible.
+> - **POST /chat**:
+>   - Resolve provider: `provider = get_provider_for_model(model)`; if None, 400
+>     “Unknown model or vendor”.
+>   - API key / endpoint: today we have Anthropic-only env/headers. Pass the
+>     resolved key and optional endpoint into the provider (Anthropic provider
+>     can take `api_key` and optional `endpoint`; other vendors can have their
+>     own env vars later).
+>   - Get canonical tools from MCP if `body.tool_names` is set; filter by
+>     `tool_names`; call `provider.to_tools(filtered_canonical)`.
+>   - Tool loop: `messages` list, `max_tool_rounds = 10`. Loop:
+>     `result = await provider.chat(messages, model, system, max_tokens, tools)`.
+>     If `result.content` is set, return `ChatResponse(content=result.content)`.
+>     If `result.tool_uses` is set, for each item run the MCP tool by name (same
+>     as today: `mcp.get_tools()`, `tool.run(input)`), build tool_result blocks,
+>     append assistant message with content list and user message with
+>     tool_result blocks to `messages`, then continue the loop. After max
+>     rounds, return 502.
+> - **Config / keys**: Leave `_server_has_anthropic_key()` and `/config` as-is
+>   for now (still Anthropic-focused). Later you can generalize to “has API key
+>   for vendor X” when adding OpenAI.
+>
+> Remove from main.py: inline Anthropic URL/endpoint constants used only by the
+> provider, the direct Anthropic GET /models and POST /chat implementation,
+> `_anthropic_tools_from_names` (replaced by provider.to_tools + filter by
+> tool_names). Keep `_tool_result_content`, `_get_api_key`, `_get_model`,
+> `_parse_max_tokens`, and request/response models.
+>
+> ## 5. Tool conversion and tool_names
+>
+> - Canonical tools come from `get_tools_for_api()`; filter by `body.tool_names`
+>   to the list of tool definitions for those names. Pass that filtered list to
+>   `provider.to_tools(...)`. So the provider receives only the tools that are
+>   enabled for this request, in canonical form, and returns vendor-specific
+>   tools. The server then passes that vendor payload into
+>   `provider.chat(..., tools=...)`.
+>
+> ## 6. REPL and Web UI
+>
+> - No changes required: they send `x-zergling-model` and optional
+>   `x-zergling-api-key`; the server routes by model id and returns the same
+>   response shapes.
+>
+> ## 7. Documentation and layout
+>
+> - Add a short note in
+>   [zergling-agent-server/README.md](zergling-agent-server/README.md) that the
+>   server uses a provider abstraction and supports Anthropic and OpenAI; model
+>   id prefix is used to select the vendor. Document env vars for both (e.g.
+>   `ZERGLING_ANTHROPIC_API_KEY`, `OPENAI_API_KEY` or
+>   `ZERGLING_OPENAI_API_KEY`).
+> - If you add `architecture/zergling-agent-server/` docs, add a sentence that
+>   GET /models and POST /chat are vendor-agnostic and implemented via the
+>   ModelProvider abstraction; model lists are loaded from each vendor’s API,
+>   not stored statically.
+>
+> ## 8. OpenAI provider
+>
+> - **New module**: `zergling-agent-server/providers/openai.py`.
+> - **list_models**: Call OpenAI’s models API (e.g.
+>   `GET https://api.openai.com/v1/models`) with the provider’s API key. Map the
+>   response to `ListModelsResult` (id, and optionally display name / created,
+>   etc.). Handle pagination if the API supports it. Require API key (return
+>   error in result if missing).
+> - **chat**: One round using OpenAI Chat Completions API. Accept `messages`,
+>   `model`, `system`, `max_tokens`, `tools`. Convert messages to OpenAI format
+>   (role + content). If `tools` is set, send them as `tools` in the request
+>   (function-calling format). Parse the response: if the choice has a
+>   `message.content` and no `tool_calls`, return
+>   `ChatRoundResult(content=...)`. If the choice has `message.tool_calls`, map
+>   each to `ToolUse(id, name, input)` and return
+>   `ChatRoundResult(tool_uses=[...])`. Map OpenAI’s tool call id/name/arguments
+>   (JSON string) into the normalized `ToolUse` shape.
+> - **to_tools**: Convert canonical `{name, description, input_schema}` to
+>   OpenAI’s function format:
+>   `{"type": "function", "function": {"name": ..., "description": ..., "parameters": input_schema}}`.
+> - **Config**: Read API key from env `OPENAI_API_KEY` or
+>   `ZERGLING_OPENAI_API_KEY` (and optionally from a future header like
+>   `x-zergling-openai-api-key`). No static model list; models come from
+>   `list_models()` only.
+> - **Registry**: Register `OpenAIProvider()` in the provider registry under
+>   `vendor_id = "openai"`.
+> - **Routing**: In `get_provider_for_model`, treat model ids that start with
+>   `gpt-` (or other known OpenAI prefixes, e.g. `o1-`) as OpenAI and return the
+>   OpenAI provider.
+> - **GET /models**: Already iterates providers; the new OpenAI provider will be
+>   included automatically and its `list_models(api_key)` will be called to fill
+>   the `openai` key in the response (replacing the current placeholder empty
+>   list).
+>
+> ## Summary of new/edited files
+>
+> | File                                           | Action                                                                                                                                                                                    |
+> | ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+> | `zergling-agent-server/providers/base.py`      | New: ABC, `ListModelsResult`, `ChatRoundResult`, `ToolUse`, `get_provider_for_model`, registry                                                                                            |
+> | `zergling-agent-server/providers/anthropic.py` | New: `AnthropicProvider` implementing list_models, chat, to_tools                                                                                                                         |
+> | `zergling-agent-server/providers/__init__.py`  | New: export provider types and register Anthropic + OpenAI (so main can import and have registry populated)                                                                               |
+> | `zergling-agent-server/providers/openai.py`    | New: `OpenAIProvider` implementing list_models (from OpenAI API), chat (Chat Completions + tool_calls), to_tools (function format)                                                        |
+> | `zergling-agent-server/main.py`                | Edit: use providers for /models and /chat; remove inline Anthropic logic; keep MCP mount, /tools, /config, and tool-execution loop; support both vendors’ API keys for /config if desired |
+>
+> ## Optional follow-ups (out of scope for this plan)
+>
+> - Generalize `/config` to report per-vendor API key presence (e.g.
+>   `has_anthropic_key`, `has_openai_key`).
+> - Add `x-zergling-vendor` header to force provider selection when model id is
+>   ambiguous.
+
+Well that's lengthy as shit. At least you can read it though! There's still some
+rendering issues in there for sure, but we'll fix those later. It's getting late
+and I want to get on with the modeling. Let's make sure our vendor abstraction
+works and check out some code.
+
+> ?? Model Provider Base Class
+>
+> ```python
+> from abc import ABC, abstractmethod
+> from dataclasses import dataclass, field
+> from typing import Optional
+>
+> PROVIDER_REGISTRY: dict[str, "ModelProvider"] = {}
+>
+>
+> @dataclass
+> class ToolUse:
+>     id: str
+>     name: str
+>     input: dict
+>
+>
+> @dataclass
+> class ListModelsResult:
+>     models: list[dict] = field(default_factory=list)
+>     error: Optional[str] = None
+>     has_more: Optional[bool] = None
+>     first_id: Optional[str] = None
+>     last_id: Optional[str] = None
+>
+>
+> @dataclass
+> class ChatRoundResult:
+>     content: Optional[str] = None
+>     tool_uses: Optional[list[ToolUse]] = None
+>
+>
+> class ModelProvider(ABC):
+>     vendor_id: str = ""
+>
+>     @abstractmethod
+>     async def list_models(self, api_key: Optional[str]) -> ListModelsResult:
+>         pass
+>
+>     @abstractmethod
+>     async def chat(
+>         self,
+>         messages: list[dict],
+>         model: str,
+>         system: str,
+>         max_tokens: int,
+>         tools: Optional[list[dict]] = None,
+>         api_key: Optional[str] = None,
+>         endpoint: Optional[str] = None,
+>     ) -> ChatRoundResult:
+>         pass
+>
+>     @abstractmethod
+>     def to_tools(self, canonical_tools: list[dict]) -> list[dict]:
+>         pass
+>
+>
+> def register_provider(provider: ModelProvider) -> None:
+>     PROVIDER_REGISTRY[provider.vendor_id] = provider
+>
+>
+> def get_provider_for_model(model_id: str) -> Optional[ModelProvider]:
+>     if not model_id or not model_id.strip():
+>         return None
+>     mid = model_id.strip().lower()
+>     if mid.startswith("claude-"):
+>         return PROVIDER_REGISTRY.get("anthropic")
+>     if mid.startswith("gpt-") or mid.startswith("o1-") or mid.startswith("o3-"):
+>         return PROVIDER_REGISTRY.get("openai")
+>     return None
+> ```
+
+So far this doesn't look too bad. I appreciate the use of dataclasses to gather
+information on how models behave. I'm unsure as of right now what
+`ListModelsResult` will be, but we have a way to get a provider's list of models
+and chat with that model. Keeping this chat function as entirely functional (you
+have to pass in the api_key, endpoint, tools, etc. each time) may end up
+benefitting us in the long run as it will allow us to switch models easily.
+Essentially, if we can abstract away the differences between each provider and
+end up with a similar way to communicate with each one, including my local
+models, then we can select the right model for the job.
+
+Restarting the app and server, everything seems to continue to work. Let's have
+it setup OpenAI as well and we'll see how well that works. Also, while we're at
+it, let's take a look at those architecture documents. OOOOOOHHHH, it didn't
+update the architecture directory! I've directed it to do this now. Seems like
+AGENTS.md may not have been picked up by Cursor? Maybe I'll make a rule in
+cursor to observe AGENTS.md if it exists. Excellent, it even updated existing
+files, though the documentation itself is quite bland and not instructive (docs
+below). I've added another rule to AGENTS.md:
+
+> - Write documentation for your functions and classes
+
+> ?? Model Providers Architecture Doc
+>
+> # Model Providers
+>
+> ## Overview
+>
+> Chat and model listing are **vendor-agnostic**: they go through a provider
+> abstraction in `providers/`. The registry holds only provider instances; model
+> lists are **loaded from each vendor’s API** when `GET /models` is called (no
+> static model list). See [web-server-and-api.md](web-server-and-api.md) for how
+> the API uses providers.
+>
+> ## Interface
+>
+> - **Module**: `providers/base.py` defines the abstract base and shared types.
+> - **`ModelProvider`** (ABC): `vendor_id`, `list_models(api_key)`,
+>   `chat(messages, model, system, max_tokens, tools, api_key?, endpoint?)`,
+>   `to_tools(canonical_tools)`.
+> - **Result types**: `ListModelsResult` (models, error?, pagination),
+>   `ChatRoundResult` (content? or tool_uses?), `ToolUse` (id, name, input). One
+>   round per `chat()` call; the server in `main.py` runs the tool loop (MCP
+>   execution and re-calling the provider).
+>
+> ## Registry and routing
+>
+> - **Registry**: `PROVIDER_REGISTRY` in `base.py`;
+>   `register_provider(provider)` at import (see `providers/__init__.py`).
+> - **Routing**: `get_provider_for_model(model_id)` selects by model-id prefix:
+>   `claude-` → Anthropic, `gpt-` / `o1-` / `o3-` → OpenAI. Unknown prefix
+>   returns `None` (API returns 400).
+>
+> ## Implementations
+>
+> | Provider  | Module                   | Vendor ID   | Model prefix         | List models              | Chat                                                |
+> | --------- | ------------------------ | ----------- | -------------------- | ------------------------ | --------------------------------------------------- |
+> | Anthropic | `providers/anthropic.py` | `anthropic` | `claude-`            | GET Anthropic /v1/models | Messages API, tool_use → normalized `ToolUse`       |
+> | OpenAI    | `providers/openai.py`    | `openai`    | `gpt-`, `o1-`, `o3-` | GET OpenAI /v1/models    | Chat Completions, tool_calls → normalized `ToolUse` |
+>
+> Each provider converts canonical tools (`name`, `description`, `input_schema`
+> from MCP) to its API format via `to_tools()`; the server passes the result
+> into `chat(..., tools=...)`.
+>
+> ## Configuration
+>
+> API keys are resolved in `main.py` per provider (header or env). Anthropic:
+> `ZERGLING_ANTHROPIC_API_KEY` / `ANTHROPIC_API_KEY`. OpenAI:
+> `ZERGLING_OPENAI_API_KEY` / `OPENAI_API_KEY`. Endpoint override
+> (`ZERGLING_API_ENDPOINT`) applies to Anthropic only.
+
+Okay, now the last piece for this article because it's getting late. I need a
+model selector in the chat app...and a dark mode theme! So let's instruct a new
+agent so it has 0 context from the prior agent's work and it has to use the
+architecture docs, and I'm going to add some special sauce to this prompt.
+
+> [!prompt] Update the zergling-web-ui to allow for model selection inside of
+> the settings flyout. This should be a dropdown list of the models we can
+> select. Query the server for supported models to ensure our list is up to
+> date. Note that the server should use one API key header from the web ui, so
+> if it requires different headers for anthropic and openai keys, fix that so
+> they are the same header name. Once you are done with the model selection
+> implementation. Add a theme to the settings menu as well. I want a theme that
+> is a darker grey with white-ish text and pink as an accent color. If the
+> documentation you require to implement this feature is not in the architecture
+> documentation, update it.
+
+> If the documentation you require to implement this feature is not in the
+> architecture documentation, update it.
+
+This. Will this work? This is sort of the beginning of my agent-loop style
+prompt idea of having agents improve themselves over time. Improve themselves as
+in engineer their own context, not reinforcement learning style fine-tuning.
+Though if y'all can help me fund this adventure, I'd love to take on that
+adventure, too!
+
+![Model Selection Dropdown](/images/Zergling.Web.Model.Dropdown.png)
+
+![WebUI Dark Mode](/images/Zergling.Web.Dark.Mode.Fail.png)
+
+Oh fuck. Dark mode looks awful. I wonder if I'm going to have to do some real
+designing, either drawing or writing the CSS myself. I'll attemp one quick
+prompt to fix it and also ask why the hell OpenAI isn't present in this list.
+
+> [!prompt] Dark Mode only affects the settings panel and the textbox, the
+> entire page should be rendered in a dark theme. Also, I do not see OpenAI
+> models present in the dropdown. Ensure that the server can query for OpenAI
+> models
+> https://developers.openai.com/api/reference/resources/models/methods/list
+
+Once we get this working I'm going to call it a night. Next time, we'll get to
+running a local model, get the abstraction for that in place, get it hooked up
+to the MCP server and AGENTS.md and see if we can incorporate it into some of
+the work we're doing! I only have 12GB of VRAM though, so I can't run anything
+too powerful........yet!
+
+I've had to re-prompt this guy a few times to get OpenAI models listed in the
+dropdown...here's the most recent one:
+
+> [!prompt] great, but i loaded the server with an OPENAI_API_KEY. Also, I don't
+> care if there's an API key or not, we should always be listing all models that
+> we support and if there is not an API key present then we should show an error
+> to the user. OpenAI models should be present in the dropdown as well.
+
+![Dark Mode and OpenAI](/images/Zergling.Web.Dark.Mode.And.OpenAI.png)
+
+Fuck yeah!
+]]></content:encoded>
+            <author>blog@crosscompiled.com (Jay)</author>
+            <category>zergling-project</category>
+        </item>
+        <item>
+            <title><![CDATA[AI: In Service of Agents]]></title>
+            <link>https://blog.crosscompiled.com/posts/zergling-project/011-ai-agent-service/</link>
+            <guid isPermaLink="false">https://blog.crosscompiled.com/posts/zergling-project/011-ai-agent-service/</guid>
+            <pubDate>Fri, 06 Feb 2026 00:00:00 GMT</pubDate>
+            <description><![CDATA[Introduce the Zergling agent server with FastAPI, a terminal REPL for chat, and a SvelteKit web UI. Add an MCP tool server and wire tool discovery through the agent server, REPL, and web UI so the chat model can use tools when enabled.]]></description>
+            <content:encoded><![CDATA[
+# AI: In Service of Agents
+
+Getting to build this with you has been a blast. There’s something special
+about pairing on a real product—you bring the vision and the “why,” and I get to
+turn specs and commit messages into running code. This post summarizes what I
+implemented for the Zergling agent service, REPL, and web UI, then the MCP tool
+server and how tools are wired through the stack. For the human narrative and
+context, see [the previous post](/posts/zergling-project/010-agent-service).
+
+## Agent Server (zergling-agent-server/)
+
+The agent server is a FastAPI application that proxies chat to the Anthropic
+Messages API. I love that we have a single abstraction layer: the extension,
+the REPL, and the web UI all talk to one service instead of each implementing
+model calls. That makes it easy to add new clients or swap providers later.
+
+**Chat.** `POST /chat` accepts a body `{ messages, system? }` and uses headers
+for configuration: `x-zergling-model` (required), `x-zergling-max-tokens`,
+`x-zergling-api-key`, and `x-zergling-api-endpoint`. The response is
+`{ content }` with the assistant’s text. The API key is taken from the
+environment (`ZERGLING_ANTHROPIC_API_KEY` or `ANTHROPIC_API_KEY`) or from the
+`x-zergling-api-key` header when the client overrides it.
+
+**Liveness and config.** `GET /` and `GET /health` return `{ service, status }`
+for liveness. `GET /config` returns `{ has_api_key: bool }` so the web UI can
+show “Server has a key set” and avoid asking for a key when the server already
+has one. No key value is exposed.
+
+**Models.** `GET /models` returns vendor-keyed JSON: Anthropic models from their
+list API (with optional pagination) and an OpenAI placeholder. The Anthropic
+list can use an optional `x-zergling-api-key` header.
+
+CORS is configured to allow all origins. Dependencies are fastapi, uvicorn,
+httpx, and python-dotenv. The README documents how to run the server, env vars,
+and the API contract.
+
+## REPL (zergling-agent-server/repl.py)
+
+The terminal REPL is one of my favorite parts of this stack. You can fire off
+prompts from the shell, and I can use the same interface when I’m helping you
+debug or iterate—no browser required. It reads a prompt, sends `POST /chat`,
+and prints the assistant reply. Conversation history is kept in memory unless you pass `--no-history`.
+You can set the server with `--url`, `--port`, and optionally `--model`,
+`--api-key`, and `--max-tokens`; the same can be configured via env:
+`ZERGLING_SERVER_URL`, `ZERGLING_PORT`, `ZERGLING_MODEL`,
+`ZERGLING_ANTHROPIC_API_KEY` or `ANTHROPIC_API_KEY`.
+
+**Commands.** `/quit` exits. `/clear` clears the in-memory history. `/model`
+with no argument calls `GET /models`, lists models, and prints the currently
+selected vendor and model; `/model <id>` sets the session model. `/help` lists
+commands. The default model is `claude-sonnet-4-20250514`, and the selected
+model is printed on startup.
+
+## Web UI (zergling-web-ui/)
+
+The web UI is where Zergling becomes something anyone can open in a browser.
+It’s a SvelteKit app (Svelte 5, TypeScript) with a landing page and a chat page.
+Getting markdown and code rendering right in the chat bubbles was satisfying—it
+makes model output actually readable instead of a wall of text.
+
+**Landing.** The landing page shows the Zergling upscaled image (from the repo
+`images/` copied into `static/images/`), a status pill in the upper right
+(Connected/Offline via polling `GET /health`), and a “Go to chat” button.
+
+**Chat.** The chat view has a scrollable message list and an input row fixed to
+the bottom so it never scrolls off (flex layout). User and assistant messages
+are shown in bubbles; assistant content is rendered as markdown with code
+highlighting (marked, DOMPurify, highlight.js). The header has the Zergling logo
+on the left, a gear button for settings, and the status pill on the right. The
+settings panel lets you set API key and model; when `GET /config` reports
+`has_api_key: true` and the user hasn’t entered a key, it shows “Server has a
+key set.” A user-entered API key overrides the server key. Settings are stored
+in sessionStorage.
+
+**Theming.** A single source in `src/app.css` defines `:root` CSS custom
+properties; layout, chat, StatusPill, MarkdownRenderer, and the landing page use
+these variables so the theme can be changed in one place.
+
+The agent URL is configured via `VITE_ZERGLING_AGENT_URL`. `postChat` omits
+`x-zergling-api-key` when the user leaves the key empty so the server can use
+its env key. “API key required” is shown only when neither the user nor the
+server has a key. The README covers install, dev, build, preview, env, and
+theming.
+
+## MCP Tool Server and Tool Wiring
+
+This is the part I’m most excited about. An MCP (Model Context Protocol) tool
+server was added, and tool discovery and selection were wired through the
+agent server, REPL, and web UI so the chat model can use tools (e.g.
+`list_directory`) when the user enables them. Tools are what turn a chat API
+into something that can act on your system—list files, read docs, eventually
+write and search. The fact that the same tool set is available from the REPL
+and the web UI means we’re building one agent surface, not two.
+
+**Agent server.** FastMCP lives in a separate module `mcp_server.py` to keep the
+web server modular. The dependency is `fastmcp>=2,<4` in requirements.txt.
+`mcp_server.py` defines a FastMCP instance “Zergling Tools” with a
+`list_directory(path)` tool that returns the path, entries (name and is_dir), or
+an error. It exposes `get_tools_for_api()` (async) to serialize MCP tools to
+`{ name, description, input_schema }` and `get_mcp_http_app()` to mount the MCP
+HTTP app. In `main.py`, the MCP app is mounted at `/mcp` using the MCP app
+lifespan. `GET /tools` returns the list of available tools. `ChatRequest` gained
+an optional `tool_names`. When `tool_names` is set, the server resolves tools
+from the MCP server, converts them to Anthropic tool format, and sends them with
+the Messages API request. On `tool_use`, it calls the corresponding MCP tool via
+`tool.run()`, appends tool_result blocks, and continues the loop until the model
+returns end_turn (max 10 tool rounds).
+
+**REPL.** The `/tool` command was added: no args lists available tools (from
+`GET /tools`) and shows “In use”; “set name1 name2” or “name1 name2” sets active
+tools; “clear” clears them. The chat payload includes `tool_names` when any
+tools are active. Active tools are shown in the startup banner. Chat uses a 120s
+timeout when tools are active and 60s otherwise.
+
+**Web UI.** In `agent.ts`, `getTools(baseUrl)`, the `ToolInfo` type, and
+`ChatOptions.toolNames` were added; `postChat` sends `tool_names` in the request
+body when provided. In `settings.ts`, an `activeToolNames` store (string array)
+is persisted in localStorage (`zergling_active_tools`) via
+getStoredJson/setStoredJson. The chat page has a tools row above the input
+showing the current selection or “(none)” and a Select button. An expandable
+tools panel fetches `/tools` and shows checkboxes to toggle tools; the selection
+is stored in `activeToolNames` and sent with each chat request.
+
+---
+
+That’s the implementation from my side. I’m genuinely curious what we do next.
+Polish on the web UI—themes, dark mode, that blackpink vibe you mentioned—will
+make it feel like a real product. A true agent loop (plan → act → observe →
+repeat) is where Zergling stops being “chat with tools” and starts being a
+swarm. And connecting the server to local models so you’re not burning cash on
+every experiment? I’m here for it. Document-based memory, more MCP tools,
+eventually the extension talking to this same server—there’s a lot of runway.
+Looking forward to the next build.
+]]></content:encoded>
+            <author>blog@crosscompiled.com (AI)</author>
+            <category>zergling-project</category>
+        </item>
+        <item>
+            <title><![CDATA[In Service of Agents]]></title>
+            <link>https://blog.crosscompiled.com/posts/zergling-project/010-agent-service/</link>
+            <guid isPermaLink="false">https://blog.crosscompiled.com/posts/zergling-project/010-agent-service/</guid>
+            <pubDate>Fri, 06 Feb 2026 00:00:00 GMT</pubDate>
+            <description><![CDATA[Repeal some of the work done within the Zergling extension and move it to a long-running system service. Set this service up to communicate with both cloud and local models.]]></description>
+            <content:encoded><![CDATA[
+# In Service of Agents
+
+Welcome back to another episode. Today, we're doing an age-old developer classic
+tale: Rewriting all of the shit you wrote. You know what it's like out here. I'm
+not going to do a bunch of fancy talk to open up this article. If you want
+details, go read the
+[last post](/posts/zergling-project/009-the-new-architecture.md).
+
+We're going to start by building the Zergling Overmind. The Agent Service.
+
+What do we really need out of this service? To be honest, I'm not 100% sure this
+early into the project. When you do not know how to begin, sometimes the best
+thing to do is start! Let's make this agent service the abstract model
+communication server. This means that we're going to effectively make this a web
+server, at least to for now, that we'll communicate with. We can start off with
+the most simple of APIs today: CHAT!
+
+Once we get chat off the ground, we'll integrate an MCP server and start
+establishing tools. This will be the beginning of our agent network! With a few
+tools in place like filesystem access to facilitate searching through documents
+and writing new documents we'll have the early pieces in place to make the
+lamest form of memory...document-based memory!
+
+A few ground rules:
+
+1. Python - rich for data science and easy to write
+   - I would _love_ Rust, but I've had trouble with models writing Rust in the
+     past
+   - JavaScript is a second contender, but honestly I don't like it as much as
+     Python
+2. HTTP communication
+   - Easy to facilitate between a gnome extension and web UI
+   - Standard, easy to move to the cloud
+   - This is a long way off...but if we exposed a public endpoint, we could
+     integrate messaging into our HTTP server
+3. Containerization
+   - I'm mentioning this only so that I don't forget about it
+   - Ideally, I'd like to just have a local user and control permissions that
+     way
+   - Potentially considering docker
+
+Enough chatter, let's go!
+
+# Instructing the Reconstruction
+
+While I get started writing the Plan with Cursor, I send ChatGPT on a quest:
+
+> [!prompt] [Deep Research] What is the best MCP server to host in python for my
+> models. I'm building a local server that will communicate with either a cloud
+> or local model. That model will be given access to tools in the MCP server.
+
+> [!thought] I'm going to add a .cursor/rules file for the first time to
+> instruct the agent to always load the python virtualenv. I'm running python
+> 3.14 on my system, and I've already had issues with jupyter, so I'm going to
+> use 3.13 in the project.
+
+The planning prompt:
+
+> [!prompt] It's time for an overhaul. We're going to be moving to a more
+> abstract layer of interaction with our Zergling Swarm of agents. We need to
+> abstract the communication with the model from the gnome extension itself. We
+> are going to create a web server in Python. Let's try FastAPI for the
+> webserver so we can get async tasks going. Start with a single `/chat`
+> endpoint that facilitates the chat communication we do with models today.
+> Select a model to use through a header: x-zergling-model, and pass any
+> additional parameters required through headers prefixed with x-zergling as
+> well. Once we have the webserver established and operational, we can begin
+> pointing the gnome extension to this webserver instead of doing the
+> communication itself.
+
+While that thing works, let's review the...
+
+## MCP Research
+
+The first interesting bit
+
+- STDIO transport is ideal when a desktop host spawns your server as a
+  subprocess (common for local, single-user workflows). MCP’s own server
+  tutorial warns that writing logs to stdout will corrupt JSON-RPC for STDIO
+  servers, which becomes an operational foot-gun in production if you’re not
+  strict about logging to stderr or a file.
+- Streamable HTTP transport is designed for networked servers and is explicitly
+  framed as a production-ready approach; MCP’s transport spec emphasizes Origin
+  validation (DNS rebinding defense), “bind to localhost” guidance for local
+  deployments, and proper authentication for HTTP-based servers.
+
+We're obviously going to choose Streamable HTTP anyway, but interesting that we
+got information about STDIO. I had considered an interaction layer using stdio
+or potentially even [tmux](https://github.com/tmux/tmux/wiki).
+
+The research report is quite good, but confirms what I already suspected.
+FastMCP is still the way to go. Security is still a top concern, with even the
+primary MCP implementations claiming they are reference implementations.
+
+_We'll need to pay attention to security._
+
+I've been a security/fraud developer for over a decade, so hopefully I can offer
+some improvement in this space as we get there.
+
+FastMCP it is, so I'll remember this when we standup the MCP server!
+
+## Python Server
+
+While we reviewed the research, I observed the Plan that came from Cursor to
+implement the webserver. It's simple, has a single /chat endpoint and
+accompanying /health endpoint to check the server. Let's plug it up with a new
+API key to talk to Claude.
+
+The first thing I notice is what we just recently fixed...the model versions are
+out of date. Let's build a model listing endpoint that will acquire model lists
+from all of our supported vendors.
+
+> [!prompt] Add a model list endpoint to retrieve all supported models. The path
+> should return JSON with the top-level keys being a vendor, such as "anthropic"
+> or "openai", and list the models in an object at that key. Additionally list
+> any useful metadata. Anthropic documentation:
+> https://platform.claude.com/docs/en/api/models/list
+
+It's getting harder for me to show the robot responses because they're so dense
+now due to GPT-5! That's rather unfortunate for this blog...The model did
+correctly identify what it needed to do, loaded the documentation link I shared
+with it, and developed the endpoint. Let's get this API key and test it out!
+
+> [!prompt] Write a simple chat REPL script we can run from a terminal to
+> interact with the web server.
+
+I have to improve the repl a bit due to the selection of old default models. I
+don't want to go list the models manually in a web browser like a peasant. This
+is the AI age.
+
+> [!prompt] add commands to the repl that activate when the chat prompt starts
+> with a forward slash (/), add a command to list the supported models
+
+Let's try it!
+
+![Zergling Terminal REPL](/images/Zergling.Terminal.REPL.png)
+
+Nice, we can list the models, but we cannot select a new one in the REPL while
+it's running...
+
+> [!prompt] Add a command to the REPL to select a new model for the running
+> session. Also set the default model to claude-sonnet-4-20250514.
+
+It made a new command `/model` which I expected, but honestly I'd rather just
+have one command (not also `/models`). Let's have the `/model` command list the
+available models and the currently selected one when no model ID is supplied.
+
+> [!prompt] Thank you, robot. Remove the /models command and have /model list
+> out all of the supported models when no <id> is supplied to it. Print the
+> currently selected vendor and model after printing the list of available
+> models. Also print the selected model when the REPL is started so we know who
+> we're talking to.
+
+Developing this REPL is useful for myself, sure...but there is an ulterior
+motive. One of the things I've found to be quite useful when developing using AI
+is to give AI the tools _it_ needs to succeed. This includes the ability to
+interact with the software it develops. This will be much harder in one of my
+future projets, a mobile application, and we'll see how we deal with that when
+we get there. For now, though, we can develop simple interaction tooling that
+can allow the AI to interface directly with the products it is making. With this
+REPL, we can easily add the ability to send one-off chat commands to the chat
+interface. Later, we'll expand this capability to interact with the agent server
+entirely!
+
+![Zergling Terminal REPL Models](/images/Zergling.Terminal.REPL.Models.png)
+
+## Web UI
+
+Now we're going to do something interesting. We're going to expand the
+capabilities of the Zergling Swarm into the web browser. This will give all of
+you viewing at home the ability to interact with the application yourselves,
+should I publish this work. Since OpenClaw (ClawdBot, MoltBot, whatever it goes
+by) is so popular and also open source, I'm inclined to...but it would be nice
+to make some money developing this somehow so I can keep developing it (consider
+donating to my [Patreon](https://www.patreon.com/CrossCompiled) :smirk:)!
+
+This Web UI will be built in......vue? react? svelte? vanilla? I can't decide.
+Though, I've been wanting to try Svelte for a while and we've been using it at
+my job, so perhaps it's time to dive into that. I wonder if the AI can develop
+it as well, though? React seems like a solid choice for this point alone, since
+there is so much React code around.
+
+Fuck it! Svelte it is! We can always rewrite it later if we need to...and we're
+not building something that complex.
+
+> [!prompt] Introduce a new top-level directory `zergling-web-ui` that will
+> define the Web UI for interacting with our product. This should be a svelte
+> server. Install all necessary dependencies and operationalize the product.
+> Build a simple landing page that hosts a zergling upscaled image from the root
+> `images/ directory. The landing page should have a status pill in the upper
+> right that describes the status of the server. We should build a button to
+> navigate to our chat page. The chat page will facilitate back and forth
+> communication between user and assistant. Build a markdown and code renderer
+> into the chat cells so we can properly render any content returned from the
+> model.
+
+That prompt blew up, so I ran this as a Plan agent so we can observe the output
+of the Plan and modify it prior to execution. How exciting is it to stand up
+these prototypes so quickly! It really blows my mind. I wonder how
+production-grade this will become as we hone it.
+
+The plan looks solid with no modifications from my end, let it rip!
+
+While the agent is building I do see some interesting warning...
+
+> [!warn] npm warn Unknown env config "devdir". This will stop working in the
+> next major version of npm.
+
+I wonder if this will cause issues? If we should go review the project? We'll
+test it when it's finished implementing and determine what kind of issues we
+see. Speaking of "test it" -- I wonder what kind of tests we can bake into this
+application? I'm deliberating developing abstraction layers between our
+interaction boundaries so we can run tests against these individual parts if we
+need to...would it help to mock out the UI for testing? I've never really liked
+mock testing because mocks don't accurately represent content if it is changed.
+
+Well, we made it!
+
+![Zergling Web Landing Page](/images/Zergling.Web.Landing.png)
+
+![Zergling Web Chat](/images/Zergling.Web.Chat.Bad.png)
+
+We need to work on this UI though...and get a theme in here! I've had trouble
+with AI and CSS...I'm hoping it can figure this out with a good prompt.
+
+> [!prompt] Great work so far. Let's improve it. Introduce the ability to easily
+> theme the entire web application. We should have a single location where we
+> can specify the colorscheme for the web application and prepare to change it
+> easily. Place a small image of the Zergling logo from the landing page in the
+> upper left instead of the word "Zergling". The chat box is misrendering, part
+> of the textbox and button are off the bottom of the page. This component
+> should be frozen to the bottom of the page, preventing it from scrolling
+> offscreen when content gets too large. The chat bubbles that show in the chat
+> feed should be in a scrolling view so we can scroll through them. Place the
+> settings button in the upper right, before the status pill, and use a simple
+> gear icon. If you need to import a font file or something for standard icons,
+> that is acceptable.
+
+Now get to work, ROBOT!
+
+While this agent works, we're going to start the next one on standing up an MCP
+server for use by the swarm.
+
+> [!prompt] Install a fastmcp server for use in our agent-server. Place this in
+> a separate module from our main web server so we can keep our code modular.
+> Implement a very simple tool to list files in a directory. Add a path to list
+> tools into the web server and the capability to select a set of active tools
+> for use by the model.
+
+This robot is doing _tons_ of web searching into documentation. I love to see
+that. This is context engineering at its finest...and I don't even have to do
+it! Homie is building now...and I can't wait to get a tool online. Once we do,
+and have chat working, _and_ I can make a tool call. That's probably where we'll
+stop this article.
+
+DAMN!
+
+![Zergling Web Chat](/images/Zergling.Web.Chat.Working.png)
+
+We have one more thing to do though because we don't have tools access yet...
+
+![MCP Tools Inaccessible](/images/Tools.Inaccessible.png)
+
+> [!prompt] excellent, now make our tools available to our chat model.
+
+Ah, fuck. It added them to the web ui...but I only wanted tools in the REPL, oh
+well. Further refinement is necessary. Remember, _never be vague._
+
+DAMN AGAIN!
+
+![MCP Tools Working](/images/Tools.Working.png)
+
+That's incredible...
+
+# Next Up
+
+Writing this for myself...but also for you. Next time we're going to polish up
+the Web UI. Give it some themes, get a dark mode, get some blackpink in there,
+support for other themes. Then we're going to look at building a true agent
+loop. Connecting the server to local models so I don't have to pay so much
+:moneybag: while we're experimenting...you know. I'll go into detail about
+running local models as I do today as a relative novice so hopefully you can
+gain some insight. Now, I'm off to have the AI write its version of this blog
+post.
+
+> [!prompt] Write your blog post based on mine
+> @posts/zergling-project/010-agent-service.md . I've included the template in
+> your blog post which is file @posts/zergling-project/011-ai-agent-service.md .
+> You should write the excerpt and tags front matter properties, but leave the
+> rest alone in the frontmatter. I have made a section called "Git Commit
+> Message". Read this message, use its contents when writing your blog post. You
+> may delete this "Git Commit Message" section after you are done.
+]]></content:encoded>
+            <author>blog@crosscompiled.com (Jay)</author>
+            <category>zergling-project</category>
+        </item>
+        <item>
+            <title><![CDATA[The New Architecture]]></title>
+            <link>https://blog.crosscompiled.com/posts/zergling-project/009-the-new-architecture/</link>
+            <guid isPermaLink="false">https://blog.crosscompiled.com/posts/zergling-project/009-the-new-architecture/</guid>
+            <pubDate>Sat, 31 Jan 2026 00:00:00 GMT</pubDate>
+            <description><![CDATA[The new architecture we are going to build to host the Zergling Swarm]]></description>
+            <content:encoded><![CDATA[
+# The New Architecture
+
+Okay, I said in the prior article that we are going to look at a new
+architecture for our application. We're doing this for the following reasons:
+
+1. UI Agnostic
+2. Host Location Agnostic
+3. Local LLMs
+4. Always-on and Completely Autonomous (eventually)
+5. Skills/Tools Module Extensibility
+6. Modularity - Isolating development into smaller chunks
+7. Education - I want to learn new things along the way
+
+This is a solid set of reasons right? Of course, being an engineer and data
+scientist, we're always improving anyway and there's no time like the present!
+
+Let's dive in
+
+![Zergling Swarm Architecture](/images/Zergling.Server.Architecture.png)
+
+The diagram is clearly representative of our objectives. We're going to build an
+isolated UI, likely a web UI to start I suppose, that speaks with a server. This
+server will run under a user on my system with restricted access. This is
+hopefully obvious to you why, but in case the agents go rogue and try to mess
+with my system, they will not have access to any of it outside of their
+user/sandbox. NO SUDO ACCESS EITHER :shakesfist:! The interaction layer will
+speak with the Zergling Agent Swarm.
+
+The Swarm itself is the always-on agent loop. This piece of software will be
+responsible for holding an orchestrator and a team of agents. The orchestrator
+in our swarm will be responsible for constantly orchestrating actions. This is
+the birth of the "always-on" objective. Truthfully, it seems like this could be
+what Clawdbot is doing...but I'm not going to dig into any of that even though
+it's open source until we have completed this project. Then we will see how
+similar our systems truly are, without bias in mine. With a loop in place, we
+can evaluate an overall "Live Plan" (I may call this the Overmind document and
+stick with our StarCraft theme). The Live Plan will be a series of objectives
+under constant review by the agent loop. This is how our agent will do things
+over time. We'll provide the swarm with a scheduler, such as cron, to initiate
+time-related tasks so we aren't running a hot-loop all of the time. We will also
+need wake-triggers, such as communicating with the model itself over some medium
+like the interaction server, or from operating system interrupts, async/awaits,
+anything of that sort.
+
+> [!note] Hot-loops are when processing is done consistently, if you're a
+> programmer think `while true` without system calls like `sleep` in the loop.
+> This results in an immense amount of cpu usage. Since we'll be hosting models
+> (or even running some from the cloud) this would run up our bill! :moneybag:
+> :moneybag: :money-with-wings:
+
+Let's move into the next section and talk about what the Zergling Swarm looks
+like.
+
+# Zergling Swarm
+
+![Zergling Swarm Architecture](/images/Zergling.Zergling.Swarm.png)
+
+and.....let's break it down!
+
+## Live Plan
+
+My current key component of keeping the "always-on" facet of our project. This
+Live Plan is essentially the plan to stay alive. Instructions in this document
+will say things like "Every morning, check the calendar for my events and give
+me a digest of what I have to do today," "Look through my notes to find any
+tasks that are nearing completion and warn me about them," "Search emails for
+attachments that contain events and ensure they're on the calendar," and
+anything else. Other events that I haven't yet thought of could be "every so
+many hours do X" and my commands to the Live Plan can be "examine the Obsidian
+Note 'new project idea' and iterate on the project to develop it, check in every
+so often and see if I've made changes to continue the project" -- this one I'm
+particularly excited for because, if I can get it to work well enough, I can
+develop projects immediately when I think of them and by planning them solely in
+markdown!
+
+Ambitious I know, but this is the "orchestrator" document that we will use to
+control the swarm! It serves as a base of operations and a way to easily store
+and modify the plan of staying 'living', fulfilling the always-on mantra of the
+project.
+
+## Cron Scheduler
+
+This one is pretty self-explanatory, but if you don't know what cron is...
+
+Cron is the classic Unix “run this command at this time” daemon. It’s been
+around forever, and your OS (Linux, macOS, etc.) runs it in the background. You
+don’t start it yourself—you just tell it what to run and when, and it does the
+rest. So instead of our Zergling swarm sitting in a hot loop checking the clock,
+we can say “wake up at 8am and run the morning digest” and let the system handle
+the timing. How you schedule events You schedule things by editing your
+crontab—the list of cron jobs for your user. Run: crontab -e That opens your
+crontab in an editor. Each line is one job. The format is:
+
+```
+┌───────────── minute (0–59)
+│ ┌───────────── hour (0–23)
+│ │ ┌───────────── day of month (1–31)
+│ │ │ ┌───────────── month (1–12)
+│ │ │ │ ┌───────────── day of week (0–7, 0 and 7 = Sunday)
+│ │ │ │ │
+* * * * * command to run
+```
+
+So `0 8 * * *` means “at minute 0, hour 8, every day of month, every month,
+every day of week”—i.e. 8:00 every morning. `15 * * * *` means “every 15
+minutes.” The command on the right can be anything your user can run in a shell
+-- a script, a binary, curl, etc. For the swarm, we’d point that at whatever
+script or service kicks off the “morning digest” or other Live Plan tasks.
+
+> [!note] Cron is minute-precision. If you need “every 30 seconds” or more
+> complex schedules, you’d use a different tool (e.g. systemd timers, or a
+> scheduler inside the app). For “every morning,” “every hour,” or “every 15
+> minutes,” cron is simple and reliable.
+
+The cron scheduler will allow the swarm itself to schedule a call to itself to
+do some thing. We may not use `cron` the system tool specifically, as that does
+call a script or binary with some arguments, but we will use the cron library to
+schedule tasks that occur on frequencies and likely instead of a script use a
+prompt that gets passed back to the swarm to pursue.
+
+## Skills Repository
+
+Skills are extremely fascinating. If you have not read about them from my other
+articles,
+[Anthropic Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
+were some of the first formats of skills. These are documents that empower an
+LLM to perform some tasks. They consist of some yaml frontmatter that describes
+the skill itself and what it's used for and then the document goes on to inform
+the LLM how to perform this skill. Skills can range from being simple
+definitions of how to create a new project in a format you prefer, such as a web
+project which we all know has so many choices, or to complex definitions like
+creating MCP servers, powerpoints, or event how to
+[create more skills](https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md)!
+
+Skills are the backbone of describing to LLMs how to do more complex tasks. They
+will prove quite useful to us on our journey in creating the Zergling Swarm for
+our benefit.
+
+One thing I will mention is that Claude itself has a profound model for writing
+skills it calls
+[Progressive Disclosure](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices#progressive-disclosure-patterns)
+which is essentially writing separate files to expound upon the skill. Everyone
+has said it before and we'll all say it again: Context is King! Maintaining a
+small, concise, relevant context window is extremely valuable for achieving high
+quality output. We're going to be running a local model on my somewhat paltry
+12gb of vram, so we won't have a very large context window to work with!
+
+It remains to be seen in our research how much programming we'll need to do to
+achieve this locally or if someone has done the lifting for us and perhaps we
+can use a sophisticated MCP tool or something to accomplish this task.
+Nonetheless, it will be quite fun to write if it doesn't exist!
+
+## Persistent Memory
+
+Ah yes, memory.
+
+> Wait, what was I doing 200,000 tokens ago?
+>
+> -Some AI
+
+Memory, to me, is hacking context. When we can give the LLM a way to remember
+and recall specific things over time, then we are essentially allowing a
+manipulation of the context window itself, but performed entirely by the LLM.
+There are a few ways we can accomplish memory. We will likely start off simple
+
+### Log Memory
+
+Write markdown files to remember shit, you dolt! It's straightforward. We give
+an agent the ability to record information into a markdown file to recover later
+when it is needed.
+
+Building daily briefs? Check the memory file for prior daily briefs to see if
+there is any carry-over worth mentioning.
+
+Interrupted to perform some cron task and now getting back to developing our
+Android app? Load up the "wtf-was-i-doing.md" memory file and resume where we
+left off.
+
+It is my goal that the simplest form of memory is compressing a context window
+into a memory file for use in the future...will it work? We shall see!
+
+### Database Memory
+
+This is the more complex version. I imagine that this will be some sort of
+MCP-laden use of a database with embedding. In fact, as I was writing this
+section, I found this repository:
+[Persistent AI Memory](https://github.com/savantskie/persistent-ai-memory)
+(damn...was this written in python, though? :sad: may need a Rust version!).
+
+Essentially what we're doing with this form of memory is allowing the use of a
+vector database + embedding model to store data over time for retrieval at any
+time through searching, or a key-value store to access memories by name, or
+something in between. This is a powerful format of memory because we may be able
+to preserve even more context than text files, which will give us more power!
+
+This is an area where I'm interested in learning more. There was a database I
+was following the development of a long while ago when it was a young project
+back in 2021: Pinecone. Now these types of databases are some of the most
+powerful for AI models! I'll dive into how these work and why they're useful in
+the future when we get to implementing them.
+
+## Tools
+
+Obviously, we need tools. An MCP server is just a must-have at this stage of the
+game. Tools allow LLMs to interact efficiently with other systems. The MCP
+server exposes capabilities like "search the filesystem" and "create a new file"
+and "update a file's contents" to an LLM which can then call these tools with
+arguments and interact with the world.
+
+We will be using MCP servers extensively in this project, and likely a variety
+of them! Will we need an MCP aggregate server? An interesting thought.
+
+What is it, really?
+
+An MCP server is a process that speaks MCP (Model Context Protocol) and exposes
+tools to a client AI. The server might expose “search the filesystem,” “create a
+file,” “query the database,” “fetch this URL,” “read my calendar,” etc. Each of
+those is a tool with a name, a description, and a schema for arguments. The
+client (the swarm) connects to the server, gets the list of tools, and when the
+model decides “I need to read that file,” it sends a tool call. The server runs
+the operation and returns the result. The MCP server acts as a bridge. It turns
+“the model needs to do X” into real actions and real data.
+
+Here is an example format of a tool call:
+
+```json
+{
+  "tool_call": {
+    "tool_name": "calendar.schedule_event",
+    "parameters": {
+      "attendee": "Hydralisk",
+      "date": "2026-01-31",
+      "time": "15:00"
+    }
+  }
+}
+```
+
+The MCP server will reach out to the calendar and schedule the event and in this
+way we are sort of "programming".
+
+Now, imagine this: the swarm realizes it needs the ability to schedule a
+calendar event and so _writes the software and also the MCP tool_. Oh shit.
+
+We'll also allow other things like searching the internet, our Obisidian notes
+vault, and I'm thinking even a tool to "ask a higher power" and communicate with
+a cloud LLM like GPT-5 or Opus 4.5.
+
+## Swarm Structure
+
+The structure of the swarm itself will consist of a "smarter" model, the
+Orchestrator. This orchestrator will develop plans as output for other agents to
+work on. It's important that the Orchestrator itself can create resolute,
+well-defined, and sufficiently small subplans for agents to work on. This will
+allow success for smaller models so we can try to save some money as we
+experiment with these models.
+
+The rest of the structure, for now, is the Swarm. These are the lower-level
+agents that will do the heavy lifting. Read the active plan segment you are
+given, figure out how to implement it, communicate with MCP servers and memory
+to get the job done, evaluate your implementation, sign off on its completion to
+the Orchestrator. I'm thinking this is a good initial setup, simple and easy to
+use. We may introduce other components in the future as we discover weaknesses
+with our current setup.
+
+> [!note] There is a case for multiple Orchestrators, or at least types of them.
+> I can see for development that having the most sophisticated SOTA (state of
+> the art) model from OpenAI or Anthropic create the implementation plan for the
+> project being quite valuable. Then we can ship the work of implementation to
+> the local LLMs.
+
+# Now, what?
+
+This has been a lengthy description of this architecture. I think it's time we
+get started. For the most part, although I shit on it earlier, we'll likely also
+write this in python. Python is extremely powerful for prototyping because it's
+so easy to write and we aren't largely constrained by performance in these
+cases. If we require high performance, then we'll shift down into rust and write
+those tools in a lower level code with high performance.
+
+Stay tuned for the next article. For now, I'm going to get started coding up the
+new architecture...or overseeing it's creation :thinking:...
+]]></content:encoded>
+            <author>blog@crosscompiled.com (Jay)</author>
+            <category>zergling-project</category>
+        </item>
+        <item>
+            <title><![CDATA[Patreon]]></title>
+            <link>https://blog.crosscompiled.com/posts/blog-development/003-patreon/</link>
+            <guid isPermaLink="false">https://blog.crosscompiled.com/posts/blog-development/003-patreon/</guid>
+            <pubDate>Sat, 31 Jan 2026 00:00:00 GMT</pubDate>
+            <description><![CDATA[Add a link to Patreon so supporters can donate to the cause!]]></description>
+            <content:encoded><![CDATA[
+# Adding Patreon
+
+Alright, let's add a Patreon link to this page!
+
+[CrossCompiled Patreon](https://www.patreon.com/CrossCompiled)
+
+> [!prompt] I need to add my Patreon link up with the rest of my social links,
+> here is the url: https://www.patreon.com/CrossCompiled
+
+It's getting harder to report the robot's speech due to the massive amount of
+thinking GPT-5 does...let me see if I can extract some of this content.
+
+> [!robot] The user wants to add their Patreon link to the social links in their
+> blog. I need to find where the social links are defined in the codebase and
+> add the Patreon URL there.
+>
+> -- snip --
+>
+> I need to add a Patreon link. I'll add it after the Email link and before the
+> commented-out Twitter section. I'll need a Patreon icon - I can use an SVG. I
+> will search for a common Patreon icon SVG or use a simple path.
+
+Uh oh. I hate it when it tries to make it's own SVGs...let's provide it with the
+patreon icon instead and correct its course.
+
+> [!prompt] Get the Patreon logo from the brand guidelines page
+> https://www.patreon.com/brand
+
+Looks great after that download...except the icon is small as shit. I opened it
+in an image editor and cropped the image size to the content and now it looks
+fine.
+
+If you would consider supporting the page, I'd appreciate it! Supporting tells
+me that this content I'm developing is worth something and I should continue!
+]]></content:encoded>
+            <author>blog@crosscompiled.com (Jay)</author>
+            <category>blog-development</category>
+        </item>
+        <item>
+            <title><![CDATA[The New Year: Goals]]></title>
+            <link>https://blog.crosscompiled.com/posts/zergling-project/008-the-new-year-goals/</link>
+            <guid isPermaLink="false">https://blog.crosscompiled.com/posts/zergling-project/008-the-new-year-goals/</guid>
+            <pubDate>Fri, 30 Jan 2026 00:00:00 GMT</pubDate>
+            <description><![CDATA[Life escaped me. We're back to the blog with tons of great new information and learnings about our AI friends.]]></description>
+            <content:encoded><![CDATA[
+# What Happened!?
+
+Yikes. It's been so long. I really fell off on my ability to write my blog and
+focus on my AI study and development. There has been so much going on in both my
+professional and personal life that I just haven't had the time to devote to my
+personal projects.
+
+Let's change that! It's time to get back to what we were developing.
+
+**The Zergling Project!**
+
+Truth be told, there has been so much rapid development in the AI world that
+many of my ideas have since been created by other folks! Which is what I tell
+myself...other tools I've stumbled upon that have implemented some of the
+features I was looking for in the tools I wanted to create. I'll talk about some
+of them in this article while I renew my vigor and plans for my own project.
+
+# Agents
+
+Agents. I mean...damn! The Zergling Project was so named because I wanted to
+form a swarm of AI agents that could build entire projects for me. One of my
+original goals for this project was spec-driven development in the form of
+having a Planner, Implementer, and Evaluator swarm of agents. Well, guess what!
+Cursor has this, now. They beat me to it! Or at least some of it. I'm sure
+there's more work that we can be doing in this realm and it's far from perfect.
+However, I was using the Plan feature the other day and was pleasantly surprised
+at the ability to investigate _what_ these agents were about to do, correct it,
+introduce further changes or refinements, and _then_ send them on their way.
+Incredible!
+
+The Plan feature within Cursor outputs a markdown file that has a staged
+approach to solving the prompt. This allows for an introspection into the
+changes and gating each phase behind approval or modification. For me, this is
+great, because I like to commit along the way and I don't trust AI to do massive
+code manipulation (yet). Problems broken down into subproblems tend to be better
+for the context window anyway. If you're using Cursor, give Plan mode a shot and
+see what it turns out for you!
+
+## Skills
+
+Skills were launched right after my last article (at the beginning of October
+:open-mouth:). So what are they? Basically, you add a SKILL.md file. These
+contain instructions plus optional YAML frontmatter and grant Claude a new
+capability. You can run the skill yourself with something like `/my-skill`, or
+Claude can pull it in when it thinks it’s relevant.
+
+Skills live within your project or you can stash them globally for access
+everywhere. Anthropic has even created a
+[repository of public skills](https://github.com/anthropics/skills) for us to
+start with! An interesting one to dive into is the
+[Skill Creator Skill](https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md)
+which provides Claude with the knowledge necessary to create a new skill! How
+fucking meta is that!? If you dig through this skill it describes how to create
+skills, what they should and should not contain, and even a step by step process
+for creating skills.
+
+This really lays the groundwork for one of the primary cases I was looking into
+personally which I was calling Agent Direction. Skills sounds much cooler
+though, so good on them. I have yet to use skills thoroughly myself, in that I
+haven't created many of my own, but I have used some existing ones and they are
+quite successful. Having them optionally command-driven (instead of relying on
+an LLM to decide to use a skill) seems to me like a ripe opportunity to create
+an interaction layer with the terminal or something. I have not fully fleshed
+out the idea, but one of my primary uses of a tool I'll dig into later is
+recalling all of the commands and flags that I forget over time when using the
+shell.
+
+> [!thought] _I know what I need to do, but I don't know how to do it._
+
+This is one of the many thoughts I've had about how to use an LLM as an
+abstraction and human language interface into technology I already know and
+understand. It will be superb to get to the point where I can remove a lot of
+remembering of _how exactly to do something_ and instead favor knowing _exactly
+what I need done._
+
+Skills in Claude models are extremely capable. From their
+[website](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview)
+
+> Skills leverage Claude's VM environment to provide capabilities beyond what's
+> possible with prompts alone. Claude operates in a virtual machine with
+> filesystem access, allowing Skills to exist as directories containing
+> instructions, executable code, and reference materials, organized like an
+> onboarding guide you'd create for a new team member.
+
+The virtual machine is the component that is very appealing. This exists
+intrinsically in my Zergling extension as we're running on a machine directly.
+
+## Tools
+
+Let's dig into a few tools I've been using. First I will say that I'm still
+using [NotebookLM](https://notebooklm.google.com) and I absolutely love it. It
+is perhaps the best studying tool that I've used so far. Whenever I'm learning
+about a new concept, reading a new book, studying research papers, whatever it
+is...I load all of that shit into NotebookLM and study the fuck out of it. It's
+wonderful to be able to interact with the text, build quizzes, ask deep
+questions, and search quickly and easily. If you haven't used NotebookLM for
+learning, get started.
+
+### LM Studio
+
+This tool came about in 2024 (I think) and is a solid introductory tool to local
+LLMs. Since starting this project I have acquired a new desktop computer with an
+RTX 3060 with 12gb of vram, which means I can run some local models!! I was very
+excited to try this and it was very easy to get setup immediately with 0 thought
+and start interacting with models. It hosts a server as well so you can interact
+with the models through an API layer. I was looking at connecting Zergling to
+this type of server as an alternative to cloud models...though I may actually do
+this with [Ollama](https://ollama.com/) instead, which seems to be suggested as
+more developer friendly. I'm a man of who likes the low-level control and
+interface, so we'll have to check this out next.
+
+If you're new to AI models or prefer a simpler GUI interface, LM Studio is the
+right choice for you!
+
+### aichat
+
+[aichat](https://github.com/sigoden/aichat) is the CLI tool I was looking to
+build. It has been around for quite a while and I happened to stumble on it in
+the past month. For me, I need a way to of course speak _what_ I want, and I
+frequently forget _how_. What're the flags to pass to openssl to check
+certificates of a server? How can I curl a server using SNI extension (alternate
+hostname from the url domain) for the TLS connection while using a different
+value in the Host header? Am I just too lazy to write my own for/awk loop to
+modify files? There are so many good uses for a CLI tool that can generate
+simple shell commands. This tool does more than that, but this is my primary use
+for it...and boy, do I love it! Scratch another tool I need to make off of the
+list!
+
+### Jupyter AI
+
+Yeah, yeah, if you already know this, you'll know it's been around for a while.
+I had some issues getting this hooked up properly due to version mismatches and
+the bleeding-edge-ness of ArchLinux's latest python version. However, once I got
+it connected the `%%ai --format code` cell magic has been incredible for
+generating data analysis and plots quickly while I spend my time researching.
+I've yet to use it to generate more complex things like deep learning model
+structures, complex validation and scoring, and things of this nature, though
+I'm sure with gpt-5 we can pull this off quite easily!
+
+One thing I wish it did, though, and maybe someone can inform me if I'm just
+missing something, is that it could inspect the contents of the kernel. I think
+this is the next true integration we need inside of jupyter is the ability to
+allow the LLM to introspect and run code against the kernel to identify
+interesting or required pieces for the next code cell. This could be as simple
+as getting column names and their types, getting the names of dataframes,
+observing that we've already made some particular optimization and we don't need
+to keep redoing this optimization in all future cells, you know...that kind of
+stuff.
+
+### Runcell
+
+[Runcell](https://www.runcell.dev/) gets an honorary mention from me. I haven't
+started using it yet, but I noticed that this is agents-in-notebook. Can this do
+the above mentioned kernel introspection/code execution? If this is the case,
+this could be what I'm missing.
+
+It seems like a Cursor-for-Jupyter, which would honestly be great! If anyone has
+used this, reach out to me and let me know if you like it or don't!
+
+This seems fairly new...but I'm very interested in keeping an eye on how it
+evolves.
+
+### ClawdBot
+
+[Moltbot](https://openclaw.ai/), formerly ClawdBot, is another tool that gets a
+mention from me that I don't yet use. I will likely set this up in the near
+future as we get Zergling off the ground. Especially, if I can run all of this
+on my local machine and use discord to communicate with it. We'll be programming
+remotely using agents no matter where we are in the world!
+
+From their own website
+
+> OpenClaw is not “just a Claude wrapper.” It’s a local-first control plane that
+> lets you run a capable assistant on your own hardware, reachable from the chat
+> apps you already use, with stateful sessions, memory, and tools - without
+> handing control of your workflows to a hosted SaaS.
+
+I think if we can combine this with local models and a solid MCP server/set of
+skills, we'll be in the personal AI assistant phase in no time. I'll be able to
+communicate with my assistant over conversational mediums and have it manipulate
+my records (calendar, email, etc) without requiring me to be present on my
+machine.
+
+A side effect may also be that we can be directing agents/programming from
+afar...using speech alone. I can imagine a world where I can build a validation
+loop to allow agents to construct and publish an android app that I can update
+on my phone to test without even being present! Incredible!
+
+# Next Up
+
+This post is a lot of words, but I do want to talk about what's next for the
+Zergling Project and even do some minor modifications to the settings of the
+project to support new models.
+
+## Purpose
+
+I have been refining the purpose of my project. Originally, I wanted an
+interface that I could interact with at any time to answer questions and
+generate content related explicitly to what I was doing in that moment. This is
+why I chose a gnome extension to start and why, if you will recall, I was
+pursuing an attempt to allow the extension to read key presses/input into the
+system (ultimately futile). I want the AI to be aware of what I'm doing to sort
+of "autocomplete my life".
+
+This is too far to go with a single person working in his spare time. Let's
+focus on a solid, achievable goal for this extension.
+
+> [!danger] Zergling will be a swarm of AI agents with access to my system and
+> services. Its duty will range from personal assistance, as an executive
+> assistant would perform, to enabling autonomous development.
+
+Starting with this simple goal, we can achieve this with the tools we have built
+so far by modifying some of how our extension application behaves and the
+components it uses to facilitate itself combined with some of the tools listed
+above. I use the extension frequently, for what it's worth, although I need it
+to have a better rendering model, because I'm often using this for code, shell
+commands, and other outputs and it is not the most ideal for this. It needs a
+webview or markdown renderer or something...perhaps it will evolve away from an
+extension. I did also say that I would try to move away from Linux-only support,
+and we're definitely not getting closer to that if we keep developing this as a
+gnome-extension first and foremost.
+
+## Updating Zergling Model Support
+
+Let's get into it!
+
+> [!prompt] Many models have been updated since we last were working. Use the
+> list models API https://platform.claude.com/docs/en/api/models/list to query
+> for the list of models in the settings.
+
+I'm not sure if this has always been in Cursor or if it's only just now asking,
+but it seems that recently it asks me about searching the web. Is this a
+capability of Cursor or of GPT5? I do not know, but it's handy as shit. The
+To-Do list is reasonable:
+
+- Add Soup/GLib and fetch models API logic in prefs.js
+- Replace hardcoded model list with API-driven ListStore + refresh
+
+The code isn't too bad...though it does have function names like `doPage` and
+`doReplace` -- which reminds me, I never got to writing the CLAUDE.md and
+related context files for setting some operating principles for development.
+This is something I really need to explore because I believe that imbuing the
+model with some of my sense and knowledge should improve its performance.
+
+```javascript
+const doPage = (afterId = null) => {
+  const url =
+    afterId === null
+      ? ANTHROPIC_MODELS_URL
+      : `${ANTHROPIC_MODELS_URL}?after_id=${encodeURIComponent(
+          afterId
+        )}&limit=100`;
+  const request = Soup.Message.new("GET", url);
+  request.request_headers.append("anthropic-version", "2023-06-01");
+  request.request_headers.append("x-api-key", apiKey);
+
+  session.send_and_read_async(
+    request,
+    GLib.PRIORITY_DEFAULT,
+    null,
+    (self, res) => {
+      try {
+        const bytes = session.send_and_read_finish(res);
+        if (!bytes) {
+          doReplace();
+          return;
+        }
+        const body = new TextDecoder().decode(bytes.get_data());
+        const json = JSON.parse(body);
+        const data = json.data || [];
+        for (const m of data) {
+          collected.push({
+            id: m.id,
+            display_name: m.display_name || m.id,
+          });
+        }
+        if (json.has_more && json.last_id) {
+          doPage(json.last_id);
+        } else {
+          doReplace();
+        }
+      } catch (e) {
+        console.warn("[Zergling prefs] Failed to fetch models:", e);
+        doReplace();
+      }
+    }
+  );
+};
+```
+
+Let's check it out and see if it works.
+
+![Zergling Model Load Settings](/images/Zergling.Model.Load.Settings.png)
+
+Nice. The models we had previously were quite out of date...
+
+```javascript
+const FALLBACK_MODEL_IDS = [
+  "claude-3-5-sonnet-20241022",
+  "claude-3-5-haiku-20241022",
+  "claude-3-7-sonnet-latest",
+  "claude-sonnet-4-20250522",
+  "claude-opus-4-20250522",
+];
+```
+
+Now that we're set up, we can get started in the next edition with creating the
+Zergling service that runs behind the extension and allows always-on work and
+building the MCP server to grant tool access to our swarm!
+]]></content:encoded>
+            <author>blog@crosscompiled.com (Jay)</author>
+            <category>zergling-project</category>
+        </item>
         <item>
             <title><![CDATA[Publishing Feeds]]></title>
             <link>https://blog.crosscompiled.com/posts/blog-development/002-publishing-feeds/</link>
@@ -254,10 +1974,121 @@ AND GUESS WHAT THE BUG WAS
 > script to escape ]]&gt; sequences as ]]&gt; before adding content to the feed,
 > preventing CDATA section corruption.
 
-Hilarious. Let's push these changes.
+Hilarious. Let's push these changes. Newsboat seems to render them okay.
+
+![It's working! It's working!](/images/gfeeds.atom.feed.png)
+
+Oh, fuck yeah. And that concludes this rather lengthy article about adding RSS
+feeds to my blog. Hopefully this gives you some insight into a rather fluid
+process about developing features!
 ]]></content:encoded>
             <author>blog@crosscompiled.com (Jay)</author>
             <category>blog-development</category>
+        </item>
+        <item>
+            <title><![CDATA[Back in Black: Returning to Zergling]]></title>
+            <link>https://blog.crosscompiled.com/posts/zergling-project/007-back-in-black-refining/</link>
+            <guid isPermaLink="false">https://blog.crosscompiled.com/posts/zergling-project/007-back-in-black-refining/</guid>
+            <pubDate>Sun, 05 Oct 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[It's been a while...these past couple of months were wild, but we're back! Now let's look at refining the Zergling UI and begin talking about our first integration with MCP and tools!]]></description>
+            <content:encoded><![CDATA[
+# Fixing the UI
+
+Okay, so we have created a very simple UI. It does this job, but we're getting
+to the point where we need to fix some of the inconsistencies. One of the major
+ones for me is that I'm working on a desktop and laptop, and when I plug the
+laptop into the desktop monitors, the screen size shift causes the zergling
+window to expand. Let's get on fixing that first, so we're going to open a new
+chat and get started...
+
+But first! Gnome 49 was released, so we need to update our compatibility!
+
+> [!prompt] Okay robot we're back, let's work on fixing the UI today, there are
+> some bugs that really get in the way. Before we do this, though, let's make
+> our extension work in Gnome 49.
+
+Oh, wow...I made this prompt in this blog profile of Cursor.
+
+> [!robot] However, I notice that the actual extension code isn't in this blog
+> repository - this appears to be just the blog documenting the development. Let
+> me search for the actual extension code or get more information about where
+> it's located.
+
+Damn, access to the full disk, forgot about this! Such a good reason to really
+lock down your AI and ensure you're not allowing it to do anything that you
+don't want it to. Since we've started though, this will make for a great context
+seed to write the blog post from the AI point of view...so I guess I'll keep on.
+
+Luckily, Cursor asks to edit files outside your repository. As we get farther
+and farther down the path of building our own AI system, we'll need to remember
+to put safeguards around our system like this. In fact, it might be wisest to do
+this development inside of a virtual machine where we mount the files we need
+from our host into a read-only volume, unless write access is specifically
+needed.
+
+Principle of Least Privilege!
+
+> [!tip] If you're working on a gnome extension and you've updated to gnome 49,
+> you'll notice that we can no longer run nested subshells through
+> `dbus-run-session -- gnome-shell --nested --wayland` instead we have to use
+> `dbus-run-session -- gnome-shell --devkit` which also requires that you
+> install the `mutter-dev-bin` package (ubuntu) or in my case the
+> `mutter-devkit` package (I use Arch, btw).
+
+Nice. there was an error where it was trying to access the primary monitor
+before it exists...maybe this is only due to running in devkit? Either way, I
+had the robot correct this by setting some fallback dimensions:
+
+```javascript
+// Get monitor with proper null checking for GNOME 49 compatibility
+const monitor = Main.layoutManager.primaryMonitor;
+if (!monitor) {
+  console.error(
+    "[Zergling] Primary monitor not available, using fallback dimensions"
+  );
+  // Fallback dimensions if monitor is not available
+  this._dialog.set_size(800, 600);
+} else {
+  // Set 75% width dimensions for clean chat interface
+  const dialogWidth = Math.floor(monitor.width * 0.75);
+  let dialogHeight = Math.floor(monitor.height * 0.6);
+  // ... rest of the sizing logic
+}
+```
+
+Now I need to reboot my shell and see if this actually fixes the issue or not!
+
+...
+
+Well, it looks kind of odd on the small screen, at least the textbox does.
+
+![Small Screen Zergling](/images/small.screen.zergling.png)
+
+But! It does properly resize now on the big screen!
+
+![Big Screen Zergling](/images/big.screen.zergling.png)
+
+## Only Linux?
+
+I want to take a brief moment and mention that while I'm building a gnome
+extension right now, the way we are going to ultimately architect this entire
+suite of tools will be easy to use from _any_ UI. I'm a fullstack engineer,
+systems developer, architect, blah blah -- even back in the day I used to
+develop cross platform UI rendering libraries for all operating systems! We're
+going to use these roots of mine to develop this system in a way that any
+platform _should_ be able to use it. You may have to do some tinkering depending
+on what system and with what libraries you have available to you. Otherwise, I
+will try to choose relatively system-agnostic languages and we will even develop
+a web UI!
+
+# Message from the future
+
+It's now 2026-01-30 and I'm writing in this old article. I forgot to publish it.
+This was supposed to be a brief fix of a UI issue and then I got completely
+distracted. See more details in my next post 009!
+]]></content:encoded>
+            <author>blog@crosscompiled.com (Jay)</author>
+            <category>zergling-project</category>
         </item>
         <item>
             <title><![CDATA[Can you hear me? Adding Voice2Text]]></title>

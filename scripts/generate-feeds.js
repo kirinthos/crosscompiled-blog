@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
-const { Feed } = require("feed");
 const fs = require("fs");
 const path = require("path");
 const { getSortedPostsData } = require("../lib/posts-data.js");
 
 async function generateFeeds() {
+  const { Feed } = await import("feed");
+
   // Site configuration - you may want to move this to a config file
   const siteUrl = "https://blog.crosscompiled.com";
   const siteTitle = "CrossCompiled Blog";
