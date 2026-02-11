@@ -1,6 +1,7 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import Image from 'next/image'
+import Script from 'next/script'
 import MermaidInitializer from '../components/MermaidInitializer'
 import VideoInitializer from '../components/VideoInitializer'
 import CategoryNavigation from '../components/CategoryNavigation'
@@ -56,17 +57,18 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Google tag (gtag.js) */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-9K87YWBE7P" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'G-9K87YWBE7P');
-            `,
-          }}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-9K87YWBE7P"
+          strategy="afterInteractive"
         />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-9K87YWBE7P');
+          `}
+        </Script>
       </head>
       <body className={inter.className}>
         <div className="min-h-screen bg-background-secondary">

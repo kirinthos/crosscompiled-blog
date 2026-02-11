@@ -155,7 +155,6 @@ function remarkCollapse() {
       if (firstText?.type !== 'text' || !firstText.value) return;
       const match = firstText.value.match(/^\?\?\?\s+(.+)$/) ?? firstText.value.match(/^\?\?\s+(.+)$/);
       if (!match) return;
-      const summary = match[1].trim();
       const openByDefault = firstText.value.startsWith('???');
       const rest = node.children.slice(1);
       const contentParts = rest
