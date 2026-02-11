@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const theme = require("./theme.config.js");
 
 /** @type {import('tailwindcss').Config} */
@@ -94,5 +95,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("@tailwindcss/typography")],
+  plugins: [require("@tailwindcss/typography")], // eslint-disable-line @typescript-eslint/no-require-imports
 };

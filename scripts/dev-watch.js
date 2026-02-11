@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 const { spawn } = require("child_process");
 const chokidar = require("chokidar");
@@ -36,7 +37,7 @@ function startServer() {
     }, 2000);
   });
 
-  devServer.on("exit", (code, signal) => {
+  devServer.on("exit", (code) => {
     if (code !== 0 && code !== null) {
       console.log(`⚠️  Dev server exited with code ${code}, restarting...`);
       setTimeout(() => {

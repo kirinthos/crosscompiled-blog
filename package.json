@@ -8,7 +8,7 @@
     "build": "node scripts/generate-sitemap.js && node scripts/generate-feeds.js && next build",
     "start": "npx serve@latest out",
     "export": "node scripts/generate-sitemap.js && node scripts/generate-feeds.js && next build",
-    "lint": "next lint",
+    "lint": "eslint .",
     "prepare": "husky",
     "preview": "npm run build && npx serve@latest out",
     "clear-cache": "node scripts/clear-cache.js",
