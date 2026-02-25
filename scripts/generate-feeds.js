@@ -3,6 +3,20 @@ const fs = require("fs");
 const path = require("path");
 const { getSortedPostsData } = require("../lib/posts-data.js");
 
+const ISO_DATE_RE = /\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})?/g;
+function normalizeTimestamps(str) {
+  return str.replace(ISO_DATE_RE, "__TS__");
+}
+
+function writeIfChanged(filePath, content) {
+  const existing = fs.existsSync(filePath) ? fs.readFileSync(filePath, "utf8") : "";
+  if (normalizeTimestamps(existing) === normalizeTimestamps(content)) {
+    return false;
+  }
+  fs.writeFileSync(filePath, content);
+  return true;
+}
+
 async function generateFeeds() {
   const { Feed } = await import("feed");
 
@@ -108,28 +122,32 @@ async function generateFeeds() {
       fs.mkdirSync(publicDir, { recursive: true });
     }
 
-    // Generate and write the feeds
     const rssContent = feed.rss2();
     const atomContent = feed.atom1();
     const jsonContent = feed.json1();
 
-    fs.writeFileSync(path.join(publicDir, "rss.xml"), rssContent);
-    fs.writeFileSync(path.join(publicDir, "atom.xml"), atomContent);
-    fs.writeFileSync(path.join(publicDir, "feed.json"), jsonContent);
+    const publicRss = path.join(publicDir, "rss.xml");
+    const publicAtom = path.join(publicDir, "atom.xml");
+    const publicJson = path.join(publicDir, "feed.json");
+
+    const wroteRss = writeIfChanged(publicRss, rssContent);
+    const wroteAtom = writeIfChanged(publicAtom, atomContent);
+    const wroteJson = writeIfChanged(publicJson, jsonContent);
 
     console.log("✅ Successfully generated feeds:");
-    console.log("   📄 RSS 2.0: /rss.xml");
-    console.log("   📄 Atom 1.0: /atom.xml");
-    console.log("   📄 JSON Feed: /feed.json");
+    console.log(`   📄 RSS 2.0: /rss.xml${wroteRss ? "" : " (no meaningful changes)"}`);
+    console.log(`   📄 Atom 1.0: /atom.xml${wroteAtom ? "" : " (no meaningful changes)"}`);
+    console.log(`   📄 JSON Feed: /feed.json${wroteJson ? "" : " (no meaningful changes)"}`);
     console.log(`   📊 ${posts.length} posts included in feeds`);
 
-    // Also copy feeds to the out directory for static export
     const outDir = path.join(__dirname, "..", "out");
     if (fs.existsSync(outDir)) {
-      fs.writeFileSync(path.join(outDir, "rss.xml"), rssContent);
-      fs.writeFileSync(path.join(outDir, "atom.xml"), atomContent);
-      fs.writeFileSync(path.join(outDir, "feed.json"), jsonContent);
-      console.log("✅ Feeds also copied to /out directory for static export");
+      const outWroteRss = writeIfChanged(path.join(outDir, "rss.xml"), rssContent);
+      const outWroteAtom = writeIfChanged(path.join(outDir, "atom.xml"), atomContent);
+      const outWroteJson = writeIfChanged(path.join(outDir, "feed.json"), jsonContent);
+      if (outWroteRss || outWroteAtom || outWroteJson) {
+        console.log("✅ Feeds also copied to /out directory for static export");
+      }
     }
   } catch (error) {
     console.error("❌ Error generating feeds:", error);

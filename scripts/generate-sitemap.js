@@ -7,6 +7,11 @@ const { getSortedPostsData } = require("../lib/posts-data");
 const SITE_URL = "https://crosscompiled.com"; // Update this to your actual domain
 const OUTPUT_PATH = path.join(process.cwd(), "public", "sitemap.xml");
 
+const ISO_DATE_RE = /\d{4}-\d{2}-\d{2}T[\d:.]+(?:Z|[+-]\d{2}:\d{2})?/g;
+function normalizeTimestamps(str) {
+  return str.replace(ISO_DATE_RE, "__TS__");
+}
+
 // Get all posts with their metadata using the shared library function
 function getAllPosts() {
   const posts = getSortedPostsData(false); // false = exclude drafts
@@ -81,9 +86,13 @@ function main() {
       fs.mkdirSync(publicDir, { recursive: true });
     }
 
-    // Generate and write sitemap
     const sitemap = generateSitemap();
-    fs.writeFileSync(OUTPUT_PATH, sitemap, "utf8");
+    const existing = fs.existsSync(OUTPUT_PATH) ? fs.readFileSync(OUTPUT_PATH, "utf8") : "";
+    if (normalizeTimestamps(existing) === normalizeTimestamps(sitemap)) {
+      console.log("   ⏭️  No meaningful changes (timestamp-only), skipping write");
+    } else {
+      fs.writeFileSync(OUTPUT_PATH, sitemap, "utf8");
+    }
 
     const posts = getAllPosts();
     console.log(`✅ Sitemap generated successfully!`);
