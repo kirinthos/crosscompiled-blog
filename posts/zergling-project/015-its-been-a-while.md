@@ -17,23 +17,23 @@ some of my personal AI projects.
 AI has come _so far_ since the last time I wrote an article.
 
 1. Anthropic’s Claude Mythos changed the AI security conversation
-1. Anthropic released “Claude Mythos Preview,” a frontier model focused on
-   autonomous vulnerability discovery and exploit generation.
-1. Mythos reportedly found zero-days in major operating systems, browsers,
-   OpenBSD, FFmpeg, and Linux subsystems.
+   1. Anthropic released “Claude Mythos Preview,” a frontier model focused on
+      autonomous vulnerability discovery and exploit generation.
+   1. Mythos reportedly found zero-days in major operating systems, browsers,
+      OpenBSD, FFmpeg, and Linux subsystems.
 1. [Linux Foundation Open Source and the Future of AI](https://www.linuxfoundation.org/hubfs/Research%20Reports/Open%20Source%20and%20the%20Future%20of%20AI_Report_2026.pdf?hsLang=en&utm_source=chatgpt.com)
-1. Profound statements on the use of AI and how it is evolving Software
-   Engineering into architecture and design overseeing agentic implementation
-1. [Torvalds allows AI contributions to the Linux kernel](https://www.tomshardware.com/software/linux/linux-lays-down-the-law-on-ai-generated-code-yes-to-copilot-no-to-ai-slop-and-humans-take-the-fall-for-mistakes-after-months-of-fierce-debate-torvalds-and-maintainers-come-to-an-agreement) -
-   Humans are responsible for the consequences, though!
+   1. Profound statements on the use of AI and how it is evolving Software
+      Engineering into architecture and design overseeing agentic implementation
+   1. [Torvalds allows AI contributions to the Linux kernel](https://www.tomshardware.com/software/linux/linux-lays-down-the-law-on-ai-generated-code-yes-to-copilot-no-to-ai-slop-and-humans-take-the-fall-for-mistakes-after-months-of-fierce-debate-torvalds-and-maintainers-come-to-an-agreement) -
+      Humans are responsible for the consequences, though!
 1. [Robots are having their ChatGPT moment](https://investor.nvidia.com/news/press-release-details/2026/NVIDIA-Releases-New-Physical-AI-Models-as-Global-Partners-Unveil-Next-Generation-Robots/?utm_source=chatgpt.com)
    Boston Dynamics and friends are using NVIDIA robotics stack to create AI
    driven robots
 1. [AI benchmarks are becoming solved](https://hai.stanford.edu/ai-index/2026-ai-index-report%20?utm_source=chatgpt.com)
-1. Near-100% SWE-bench coding performance
-1. IMO gold-medal math performance (technically 2025)
-1. Google, Meta, and others are even more aggressively chasing Agentic AI (yes,
-   Meta restructured again...)
+   1. Near-100% SWE-bench coding performance
+   1. IMO gold-medal math performance (technically 2025)
+   1. Google, Meta, and others are even more aggressively chasing Agentic AI
+      (yes, Meta restructured again...)
 
 There has been so many changes this year so far it is truly a sight to behold.
 We're on the cusp of the exponential curve of AI advancement in my opinion. I

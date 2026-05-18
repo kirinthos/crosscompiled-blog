@@ -493,6 +493,45 @@ export function getAllPostIds() {
   });
 }
 
+export async function renderMarkdownToHtml(markdown: string): Promise<string> {
+  if (!rehypeKatex) {
+    try {
+      rehypeKatex = (await import('rehype-katex')).default;
+    } catch (error) {
+      console.warn('Failed to load rehype-katex, math rendering will be disabled:', error);
+      rehypeKatex = () => {};
+    }
+  }
+
+  const processedContent = await remark()
+    .use(gfm)
+    .use(remarkCallouts)
+    .use(remarkCollapse)
+    .use(remarkMermaid)
+    .use(remarkVideo)
+    .use(remarkEmojis)
+    .use(remarkMath)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeRaw)
+    .use(rehypeKatex)
+    .use(rehypeHighlight, {
+      languages: {
+        ...common,
+      }
+    })
+    .use(rehypeSlug)
+    .use(rehypeAutolinkHeadings, {
+      behavior: 'wrap',
+      properties: {
+        className: ['heading-link']
+      }
+    })
+    .use(rehypeStringify)
+    .process(markdown);
+
+  return processedContent.toString();
+}
+
 export async function getPostData(id: string): Promise<BlogPost> {
   // Handle both direct files and subdirectory files
   const fullPath = path.join(postsDirectory, `${id}.md`);
@@ -511,47 +550,7 @@ export async function getPostData(id: string): Promise<BlogPost> {
     }
   }
 
-  // Dynamically import KaTeX to avoid module resolution issues
-  if (!rehypeKatex) {
-    try {
-      rehypeKatex = (await import('rehype-katex')).default;
-    } catch (error) {
-      console.warn('Failed to load rehype-katex, math rendering will be disabled:', error);
-      rehypeKatex = () => {}; // No-op plugin
-    }
-  }
-
-  // Use remark to convert markdown into HTML string with enhanced features
-  const processedContent = await remark()
-    .use(gfm) // GitHub Flavored Markdown support
-    .use(remarkCallouts) // Custom callout boxes
-    .use(remarkCollapse) // Collapsible details/summary
-    .use(remarkMermaid) // Custom Mermaid diagram handling
-    .use(remarkVideo) // Custom video embed handling
-    .use(remarkEmojis) // Custom emoji conversion
-    .use(remarkMath) // Math notation support
-    .use(remarkRehype, { allowDangerousHtml: true }) // Convert remark AST to rehype AST
-    // Parse raw HTML (callouts, collapse, mermaid) so later plugins can process inner nodes
-    .use(rehypeRaw)
-    .use(rehypeKatex) // Math rendering (dynamically loaded)
-    .use(rehypeHighlight, {
-      // Configure supported languages
-      languages: {
-        ...common,
-      }
-    }) // Syntax highlighting for code blocks (including those inside callouts/collapse)
-    .use(rehypeSlug) // Add IDs to headings
-    .use(rehypeAutolinkHeadings, {
-      // Add clickable links to headings
-      behavior: 'wrap',
-      properties: {
-        className: ['heading-link']
-      }
-    })
-    .use(rehypeStringify) // Convert rehype AST to HTML string
-    .process(matterResult.content);
-  
-  const contentHtml = processedContent.toString();
+  const contentHtml = await renderMarkdownToHtml(matterResult.content);
 
   // Combine the data with the id and contentHtml
   return {

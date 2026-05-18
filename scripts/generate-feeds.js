@@ -19,6 +19,7 @@ function writeIfChanged(filePath, content) {
 
 async function generateFeeds() {
   const { Feed } = await import("feed");
+  const { renderMarkdownToHtml } = await import("../lib/markdown.ts");
 
   // Site configuration - you may want to move this to a config file
   const siteUrl = "https://blog.crosscompiled.com";
@@ -64,17 +65,18 @@ async function generateFeeds() {
       },
     });
 
-    // Add each post to the feed
-    posts.forEach((post) => {
+    for (const post of posts) {
       const postUrl = `${siteUrl}/posts/${post.id}/`;
 
-      // Create a clean excerpt from content if no excerpt is provided
+      const contentHtml = post.content
+        ? await renderMarkdownToHtml(post.content)
+        : "";
+
       let description = post.excerpt;
-      if (!description && post.content) {
-        // Strip HTML tags and get first 200 characters
-        description = post.content
+      if (!description && contentHtml) {
+        description = contentHtml
           .replace(/<[^>]*>/g, "")
-          .replace(/\n/g, " ")
+          .replace(/\s+/g, " ")
           .trim()
           .substring(0, 200);
         if (description.length === 200) {
@@ -82,9 +84,8 @@ async function generateFeeds() {
         }
       }
 
-      // Escape content to prevent CDATA issues with ]]> sequences
-      const safeContent = post.content
-        ? post.content.replace(/]]>/g, "]]&gt;")
+      const safeContent = contentHtml
+        ? contentHtml.replace(/]]>/g, "]]&gt;")
         : "";
 
       feed.addItem({
@@ -109,12 +110,11 @@ async function generateFeeds() {
         ],
         date: new Date(post.date),
         category: post.tags?.map((tag) => ({ name: tag })) || [],
-        // Add category as well
         ...(post.category && {
           category: [{ name: post.category }],
         }),
       });
-    });
+    }
 
     // Ensure the public directory exists
     const publicDir = path.join(__dirname, "..", "public");
@@ -157,7 +157,10 @@ async function generateFeeds() {
 
 // Run the feed generation
 if (require.main === module) {
-  generateFeeds();
+  generateFeeds().catch((error) => {
+    console.error("❌ Error generating feeds:", error);
+    process.exit(1);
+  });
 }
 
 module.exports = { generateFeeds };
